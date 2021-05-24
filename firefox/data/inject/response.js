@@ -12,17 +12,24 @@ if (!div) {
     display: flex;
     flex-direction: column;
     background-color: #fff;
+    max-height: calc(100vh - 20px);
   `;
   document.body.appendChild(div);
 
   chrome.runtime.onMessage.addListener(request => {
     if (request.method === 'close-me') {
-      const iframe = document.querySelector(`iframe[src="${request.src}"]`);
-      if (iframe) {
-        iframe.remove();
+      const f = document.getElementById(request.id);
+      if (f) {
+        f.remove();
         if (div.children.length === 0) {
           div.style.display = 'none';
         }
+      }
+    }
+    else if (request.method === 'resize') {
+      const f = document.getElementById(request.id);
+      if (f) {
+        f.style.height = request.value;
       }
     }
   });
@@ -37,7 +44,9 @@ if (!div) {
     background-color: #f1f1f1;
     margin: 5px;
   `;
-  iframe.src = chrome.runtime.getURL('/data/ui/index.html?id=' + Math.random());
+  const id = 'ocr-' + Math.random();
+  iframe.src = chrome.runtime.getURL('/data/ui/index.html?id=' + id);
+  iframe.id = id;
   div.style.display = 'flex';
   div.appendChild(iframe);
 }
