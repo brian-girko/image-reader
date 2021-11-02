@@ -3,7 +3,6 @@
 
 const isFirefox = /Firefox/.test(navigator.userAgent) || typeof InstallTrigger !== 'undefined';
 const args = new URLSearchParams(location.search);
-let worker;
 
 const post = (request, c) => {
   try {
@@ -22,6 +21,41 @@ const post = (request, c) => {
     document.getElementById('result').textContent = '';
     document.getElementById('result').appendChild(doc.querySelector('div'));
   }
+};
+
+const ocr = async (lang, src) => {
+  const worker = Tesseract.createWorker({
+    'workerBlobURL': false,
+    'workerPath': '/libraries/tesseract/worker.min.js',
+    'corePath': '/libraries/tesseract/tesseract-core.wasm.js',
+    logger(report) {
+      document.getElementById('result').dataset.msg = report.status;
+
+      if (report.status === 'recognizing text') {
+        document.getElementById('recognize').value = report.progress;
+      }
+      else if (
+        report.status === 'loading language traineddata' ||
+        report.status === 'loaded language traineddata'
+      ) {
+        document.getElementById('lang').value = report.progress;
+      }
+    }
+  });
+  await worker.load();
+
+  await worker.loadLanguage(lang);
+  await worker.initialize(lang);
+
+  await worker.setParameters({
+    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+    tessedit_ocr_engine_mode: Tesseract.DEFAULT
+  });
+  const o = (await worker.recognize(src)).data;
+
+  worker.terminate();
+
+  return o;
 };
 
 chrome.storage.local.get({
@@ -43,48 +77,82 @@ chrome.storage.local.get({
       else {
         ctx.drawImage(img, 0, 0);
       }
-      run(canvas.toDataURL());
+      run();
     };
     img.src = href;
 
 
-    const run = async src => {
+    const run = async () => {
+      const src = canvas.toDataURL();
+
       document.getElementById('recognize').value = 0;
-      document.getElementById('lang').value = 0;
       document.getElementById('result').textContent = '';
-      try {
-        await worker.terminate();
-      }
-      catch (e) {}
-      try {
-        worker = Tesseract.createWorker({
-          'workerBlobURL': isFirefox ? false : true,
-          'workerPath': chrome.runtime.getURL('/libraries/tesseract/worker.min.js'),
-          'corePath': chrome.runtime.getURL('/libraries/tesseract/tesseract-core.wasm.js'),
-          logger(report) {
-            if (report.status === 'recognizing text') {
-              document.getElementById('recognize').value = report.progress;
-            }
-            else if (report.status === 'loaded language traineddata') {
-              document.getElementById('lang').value = report.progress;
-            }
-          }
-        });
 
-        const lang = document.getElementById('language').value;
-        await worker.load();
-        await worker.loadLanguage(lang);
-        await worker.initialize(lang);
-        await worker.setParameters({
-          tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-          tessedit_ocr_engine_mode: Tesseract.DEFAULT
-        });
-        const o = (await worker.recognize(src)).data;
+      const result = document.getElementById('result');
+      const lang = document.getElementById('language').value;
 
+      let o;
+      try {
+        if (lang !== 'detect') {
+          o = await ocr(lang, src);
+        }
+        else {
+          await Promise.all([
+            ocr('eng', src).then(o => {
+              return new Promise(resolve => chrome.i18n.detectLanguage(o.text, r => {
+                resolve({
+                  lang: 'eng',
+                  o,
+                  r
+                });
+              }));
+            }),
+            ocr('ara', src).then(o => {
+              return new Promise(resolve => chrome.i18n.detectLanguage(o.text, r => {
+                resolve({
+                  lang: 'ara',
+                  o,
+                  r
+                });
+              }));
+            }),
+            ocr('jpn', src).then(o => {
+              return new Promise(resolve => chrome.i18n.detectLanguage(o.text, r => {
+                resolve({
+                  lang: 'jpn',
+                  o,
+                  r
+                });
+              }));
+            })
+          ]).then(async a => {
+            const r = a.sort((a, b) => {
+              return b.o.confidence - a.o.confidence;
+            })[0];
+            if (r.r.languages.length) {
+              const ln = r.r.languages[0].language;
+              const e = [...document.querySelectorAll('#language option')].filter(o => {
+                return o.value !== 'detect' && o.value.startsWith(ln);
+              }).shift();
+              if (e) {
+                document.querySelector('option[value=detect]').textContent = `Auto Detect (${ln})`;
+                result.dataset.msg = `Detected language is "${ln}". Please wait...`;
+                if (a.some(o => o.lang === e.value)) {
+                  console.log('skipped!');
+                  o = a.filter(o => o.lang === e.value).shift().o;
+                }
+                else {
+                  o = await ocr(e.value, src);
+                }
+              }
+            }
+            o = o || r.o;
+          });
+        }
         document.getElementById('recognize').value = 1;
         const parser = new DOMParser();
         const doc = parser.parseFromString(o.hocr, 'text/html');
-        const result = document.getElementById('result');
+
         for (const child of [...doc.body.childNodes]) {
           result.appendChild(child);
         }
@@ -96,11 +164,10 @@ chrome.storage.local.get({
         else {
           document.getElementById('copy').disabled = false;
         }
-        await worker.terminate();
       }
       catch (e) {
         console.warn(e);
-        document.getElementById('result').textContent = 'Error: ' + e.message;
+        result.dataset.msg = e.message;
       }
     };
 

@@ -36,7 +36,7 @@ input[type=button]:disabled {
   padding: 5px;
 }
 #result:empty::before {
-  content: 'Downloading Resources...';
+  content: attr(data-msg);
 }
 #result .ocr_par:first-child {
   margin-top: 0;
@@ -57,7 +57,7 @@ input[type=button]:disabled {
 }
 #language {
   border: none;
-  width: 100px;
+  width: 140px;
   text-overflow: ellipsis;
   background-color: transparent;
   outline: none;
