@@ -23,8 +23,8 @@ capture = (function() {
   });
 
   function update(e) {
-    rect.rb.x += e.movementX;
-    rect.rb.y += e.movementY;
+    rect.rb.x = e.clientX;
+    rect.rb.y = e.clientY;
 
     for (const [key, value] of Object.entries(calc())) {
       box.style[key] = value + 'px';
