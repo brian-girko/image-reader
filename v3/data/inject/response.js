@@ -4,6 +4,7 @@ var div = window.div;
 if (!div) {
   div = document.createElement('div');
   div.style = `
+    all: initial;
     position: fixed;
     bottom: 10px;
     right: 30px;
@@ -45,7 +46,7 @@ if (!div) {
     margin: 5px;
   `;
   const id = 'ocr-' + Math.random();
-  iframe.src = chrome.runtime.getURL('/data/ui/index.html?id=' + id);
+  iframe.src = chrome.runtime.getURL('/data/ui/index.html?id=' + id + '&href=' + encodeURIComponent(location.href));
   iframe.id = id;
   div.style.display = 'flex';
   div.appendChild(iframe);

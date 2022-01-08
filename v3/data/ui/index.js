@@ -169,6 +169,7 @@ chrome.storage.local.get({
         }
         else {
           document.getElementById('copy').disabled = false;
+          document.getElementById('post').disabled = false;
         }
       }
       catch (e) {
@@ -182,7 +183,6 @@ chrome.storage.local.get({
         'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara']
       }, prefs => {
         prefs['frequently-used'].unshift(e.target.value);
-        console.log(prefs);
         chrome.storage.local.set({
           'lang': e.target.value,
           'frequently-used': prefs['frequently-used'].filter((s, i, l) => s && l.indexOf(s) === i).slice(0, 10)
@@ -225,5 +225,75 @@ document.getElementById('expand').addEventListener('click', e => {
     method: 'resize',
     value: e.target.dataset.mode === 'expand' ? '70vh' : 'unset',
     id: args.get('id')
+  });
+});
+
+
+document.getElementById('post').addEventListener('click', e => {
+  chrome.storage.local.get({
+    'post-method': 'POST',
+    'post-href': '',
+    'post-body': ''
+  }, prefs => {
+    if (prefs['post-href'] === '' || e.shiftKey) {
+      const m = prompt(`Where do you want the data to get posted:
+Server Example:
+${chrome.runtime.getManifest().homepage_url + '#faq8'}
+
+Post Example:
+POST|http://127.0.0.1:8080|&content;
+POST|http://127.0.0.1:8080|{"body":"&content"};
+
+Put Example:
+PUT|http://127.0.0.1:8080|&content;
+
+Get Example:
+GET|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-href'], prefs['post-body']].join('|'));
+
+      const [method, href, body] = m.split('|');
+      Object.assign(prefs, {
+        'post-method': (method || 'POST').toUpperCase(),
+        'post-href': href || '',
+        'post-body': body || ''
+      });
+      chrome.storage.local.set(prefs);
+    }
+
+    const value = document.getElementById('result').value.trim();
+    const options = {
+      method: prefs['post-method'],
+      mode: 'no-cors'
+    };
+    if (prefs['post-body'] && prefs['post-method'] !== 'GET') {
+      options.body = prefs['post-body']
+        .replace('&content;', value)
+        .replace('&href;', args.get('href'));
+    }
+
+    const t = msg => {
+      clearTimeout(t.id);
+      e.target.value = msg;
+      t.id = setTimeout(() => e.target.value = 'Post Result', 3000);
+    };
+
+    if (prefs['post-href'] === '') {
+      return t('Empty Server');
+    }
+
+    e.target.value = '...';
+    const href = prefs['post-href']
+      .replace('&content;', encodeURIComponent(value))
+      .replace('&href;', encodeURIComponent(args.get('href')));
+    fetch(href, options).then(r => {
+      if (r.ok || r.status === 0) {
+        t('Done');
+      }
+      else {
+        throw Error('Error ' + r.status);
+      }
+    }).catch(error => {
+      console.warn(error);
+      t(error.message);
+    });
   });
 });
