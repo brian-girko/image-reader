@@ -1,7 +1,6 @@
 /* globals Tesseract */
 'use strict';
 
-const isFirefox = /Firefox/.test(navigator.userAgent) || typeof InstallTrigger !== 'undefined';
 const args = new URLSearchParams(location.search);
 
 const post = (request, c) => {
@@ -59,8 +58,15 @@ const ocr = async (lang, src) => {
 };
 
 chrome.storage.local.get({
-  lang: 'eng'
+  'lang': 'eng',
+  'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara']
 }, prefs => {
+  // frequently used
+  for (const lang of prefs['frequently-used']) {
+    const e = document.querySelector(`option[value="${lang}"]`).cloneNode(true);
+    document.getElementById('frequently-used').appendChild(e);
+  }
+
   document.getElementById('language').value = prefs.lang;
   post({
     method: 'image'
@@ -172,9 +178,17 @@ chrome.storage.local.get({
     };
 
     document.getElementById('language').onchange = e => {
-      chrome.storage.local.set({
-        lang: e.target.value
+      chrome.storage.local.get({
+        'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara']
+      }, prefs => {
+        prefs['frequently-used'].unshift(e.target.value);
+        console.log(prefs);
+        chrome.storage.local.set({
+          'lang': e.target.value,
+          'frequently-used': prefs['frequently-used'].filter((s, i, l) => s && l.indexOf(s) === i).slice(0, 10)
+        });
       });
+
       run();
     };
   });

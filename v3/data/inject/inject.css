@@ -1,3 +1,10 @@
+.itrisearch-box,
+.itrisearch-guide-1,
+.itrisearch-guide-2,
+.itrisearch-guide-3 {
+  all: initial;
+}
+
 .itrisearch-box {
   box-sizing: border-box;
   position: fixed;
