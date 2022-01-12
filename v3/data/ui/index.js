@@ -26,7 +26,7 @@ const ocr = async (lang, src) => {
   const worker = Tesseract.createWorker({
     'workerBlobURL': false,
     'workerPath': '/libraries/tesseract/worker.min.js',
-    'corePath': '/libraries/tesseract/tesseract-core.wasm.js',
+    'corePath': '/libraries/tesseract/tesseract-core.asm.js',
     logger(report) {
       document.getElementById('result').dataset.msg = report.status;
 
@@ -174,7 +174,7 @@ chrome.storage.local.get({
       }
       catch (e) {
         console.warn(e);
-        result.dataset.msg = e.message;
+        result.dataset.msg = e.message || e;
       }
     };
 
