@@ -170,6 +170,7 @@ chrome.storage.local.get({
         else {
           document.getElementById('copy').disabled = false;
           document.getElementById('post').disabled = false;
+          result.setAttribute('contenteditable', true);
         }
       }
       catch (e) {
@@ -200,7 +201,7 @@ document.getElementById('close').addEventListener('click', () => post({
 }));
 
 document.getElementById('copy').addEventListener('click', e => {
-  const value = document.getElementById('result').value;
+  const value = document.getElementById('result').innerText;
 
   navigator.clipboard.writeText(value).catch(() => {
     const el = document.createElement('textarea');
@@ -242,15 +243,19 @@ ${chrome.runtime.getManifest().homepage_url + '#faq8'}
 
 Post Example:
 POST|http://127.0.0.1:8080|&content;
-POST|http://127.0.0.1:8080|{"body":"&content"};
+POST|http://127.0.0.1:8080|{"body":"&content;"}
 
 Put Example:
 PUT|http://127.0.0.1:8080|&content;
 
 Get Example:
-GET|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-href'], prefs['post-body']].join('|'));
+GET|http://127.0.0.1:8080?data=&content;|
+
+Open in Browser Tab Example:
+OPEN|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-href'], prefs['post-body']].join('|'));
 
       const [method, href, body] = m.split('|');
+
       Object.assign(prefs, {
         'post-method': (method || 'POST').toUpperCase(),
         'post-href': href || '',
@@ -259,15 +264,32 @@ GET|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-h
       chrome.storage.local.set(prefs);
     }
 
-    const value = document.getElementById('result').value.trim();
+    const value = document.getElementById('result').innerText.trim();
     const options = {
       method: prefs['post-method'],
       mode: 'no-cors'
     };
     if (prefs['post-body'] && prefs['post-method'] !== 'GET') {
       options.body = prefs['post-body']
-        .replace('&content;', value)
-        .replace('&href;', args.get('href'));
+        .replaceAll('&content;', value)
+        .replaceAll('&href;', args.get('href'));
+      // If this is a JSON, try builder
+      if (prefs['post-body'].startsWith('{') && prefs['post-body'].endsWith('}')) {
+        try {
+          const o = JSON.parse(prefs['post-body']);
+          for (const [key, holder] of Object.entries(o)) {
+            if (typeof holder === 'string') {
+              o[key] = holder
+                .replaceAll('&content;', value)
+                .replaceAll('&href;', args.get('href'));
+            }
+          }
+          options.body = JSON.stringify(o);
+        }
+        catch (e) {
+          console.warn('Cannot use the JSON Builder', e);
+        }
+      }
     }
 
     const t = msg => {
@@ -282,18 +304,26 @@ GET|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-h
 
     e.target.value = '...';
     const href = prefs['post-href']
-      .replace('&content;', encodeURIComponent(value))
-      .replace('&href;', encodeURIComponent(args.get('href')));
-    fetch(href, options).then(r => {
-      if (r.ok || r.status === 0) {
-        t('Done');
-      }
-      else {
-        throw Error('Error ' + r.status);
-      }
-    }).catch(error => {
-      console.warn(error);
-      t(error.message);
-    });
+      .replaceAll('&content;', encodeURIComponent(value))
+      .replaceAll('&href;', encodeURIComponent(args.get('href')));
+
+    if (options.method === 'OPEN') {
+      chrome.tabs.create({
+        url: href
+      }, () => t('Done'));
+    }
+    else {
+      fetch(href, options).then(r => {
+        if (r.ok || r.status === 0) {
+          t('Done');
+        }
+        else {
+          throw Error('Error ' + r.status);
+        }
+      }).catch(error => {
+        console.warn(error);
+        t(error.message);
+      });
+    }
   });
 });
