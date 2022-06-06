@@ -194,9 +194,10 @@ chrome.storage.local.get({
   });
 });
 
-document.getElementById('close').addEventListener('click', () => post({
+document.getElementById('close').addEventListener('click', e => post({
   method: 'close-me',
-  id: args.get('id')
+  id: args.get('id'),
+  all: e.shiftKey
 }));
 
 document.getElementById('copy').addEventListener('click', e => {
@@ -253,7 +254,7 @@ GET|http://127.0.0.1:8080?data=&content;|
 Open in Browser Tab Example:
 OPEN|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-href'], prefs['post-body']].join('|'));
 
-      const [method, href, body] = m.split('|');
+      const [method, href, body] = (m || '').split('|');
 
       Object.assign(prefs, {
         'post-method': (method || 'POST').toUpperCase(),

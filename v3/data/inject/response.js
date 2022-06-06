@@ -18,6 +18,12 @@ if (!div) {
   document.body.appendChild(div);
 
   chrome.runtime.onMessage.addListener(request => {
+    if (request.method === 'close-me' && request.all) {
+      if (div) {
+        div.remove();
+        div = null;
+      }
+    }
     if (request.method === 'close-me') {
       const f = document.getElementById(request.id);
       if (f) {
