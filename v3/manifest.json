@@ -9,6 +9,10 @@
     "notifications",
     "scripting"
   ],
+  "host_permissions": [
+    "https://tessdata.projectnaptha.com/4.0.0/*.gz",
+    "https://github.com/naptha/tessdata/blob/gh-pages/*.gz?raw=true"
+  ],
   "homepage_url": "https://add0n.com/ocr.html",
   "background": {
     "service_worker": "worker.js"
@@ -28,6 +32,5 @@
       "data/ui/index.html"
     ],
     "matches": ["*://*/*"]
-  }],
-  "minimum_chrome_version": "92"
+  }]
 }

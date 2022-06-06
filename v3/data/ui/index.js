@@ -25,7 +25,7 @@ const post = (request, c) => {
 const ocr = async (lang, src) => {
   const worker = Tesseract.createWorker({
     'workerBlobURL': false,
-    'workerPath': '/libraries/tesseract/worker.min.js',
+    'workerPath': '/data/ui/worker-overwrites.js',
     'corePath': '/libraries/tesseract/tesseract-core.asm.js',
     logger(report) {
       document.getElementById('result').dataset.msg = report.status;
@@ -42,7 +42,6 @@ const ocr = async (lang, src) => {
     }
   });
   await worker.load();
-
   await worker.loadLanguage(lang);
   await worker.initialize(lang);
 
