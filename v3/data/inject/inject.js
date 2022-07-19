@@ -31,7 +31,6 @@ capture = (function() {
     }
   }
   function remove() {
-    console.log(11);
     chrome.runtime.sendMessage({
       method: 'captured',
       ...calc(),

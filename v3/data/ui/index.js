@@ -307,9 +307,6 @@ OPEN|http://127.0.0.1:8080?data=&content;|`, [prefs['post-method'], prefs['post-
       .replaceAll('&content;', encodeURIComponent(value))
       .replaceAll('&href;', encodeURIComponent(args.get('href')));
 
-
-    console.log(href, options);
-
     if (options.method === 'OPEN') {
       chrome.runtime.sendMessage({
         method: 'open-link',

@@ -65,7 +65,6 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         top: top * devicePixelRatio,
         href
       };
-      console.log(1111);
       chrome.scripting.executeScript({
         target: {
           tabId: sender.tab.id
