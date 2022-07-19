@@ -65,6 +65,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         top: top * devicePixelRatio,
         href
       };
+      console.log(1111);
       chrome.scripting.executeScript({
         target: {
           tabId: sender.tab.id
@@ -79,6 +80,12 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.method === 'close-me' || request.method === 'resize') {
     chrome.tabs.sendMessage(sender.tab.id, request);
+  }
+  else if (request.method === 'open-link') {
+    chrome.tabs.create({
+      url: request.href,
+      index: sender.tab.index
+    });
   }
 });
 

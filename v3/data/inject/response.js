@@ -16,6 +16,7 @@ if (!div) {
     max-height: calc(100vh - 20px);
   `;
   document.body.appendChild(div);
+  window.div = div;
 
   chrome.runtime.onMessage.addListener(request => {
     if (request.method === 'close-me' && request.all) {
