@@ -15,7 +15,7 @@ chrome.action.onClicked.addListener(async tab => {
       },
       files: ['data/inject/inject.css']
     });
-    chrome.scripting.executeScript({
+    await chrome.scripting.executeScript({
       target: {
         tabId: tab.id
       },
@@ -35,9 +35,7 @@ chrome.action.onClicked.addListener(async tab => {
   }
 });
 
-const cache = {};
-
-chrome.runtime.onMessage.addListener((request, sender, response) => {
+chrome.runtime.onMessage.addListener((request, sender) => {
   if (request.method === 'captured' || request.method === 'aborted') {
     chrome.action.setIcon({
       tabId: sender.tab.id,
@@ -57,33 +55,61 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     }
     chrome.tabs.captureVisibleTab(sender.tab.windowId, {
       format: 'png'
-    }, href => {
-      cache[sender.tab.id] = {
-        width: width * devicePixelRatio,
-        height: height * devicePixelRatio,
-        left: left * devicePixelRatio,
-        top: top * devicePixelRatio,
-        href
-      };
-      chrome.scripting.executeScript({
-        target: {
+    }, async href => {
+      try {
+        const target = {
           tabId: sender.tab.id
-        },
-        files: ['data/inject/response.js']
-      });
+        };
+        await chrome.scripting.executeScript({
+          target,
+          files: ['/data/inject/elements.js'],
+          world: 'MAIN'
+        });
+        await chrome.scripting.executeScript({
+          target,
+          files: ['/data/engine/helper.js']
+        });
+        await chrome.scripting.executeScript({
+          target,
+          files: ['/data/inject/response.js']
+        });
+        // start
+        chrome.storage.local.get({
+          'post-method': 'POST',
+          'post-href': '',
+          'post-body': '',
+          'lang': 'eng',
+          'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara']
+        }, prefs => chrome.scripting.executeScript({
+          target,
+          func: (prefs, href, box) => {
+            const em = document.querySelector('ocr-result:last-of-type');
+
+            em.command('configure', prefs);
+            em.command('prepare');
+
+            em.href = href;
+            em.box = box;
+
+            em.run();
+          },
+          args: [prefs, href, {
+            width: width * devicePixelRatio,
+            height: height * devicePixelRatio,
+            left: left * devicePixelRatio,
+            top: top * devicePixelRatio
+          }]
+        }));
+      }
+      catch (e) {
+        notify(e);
+      }
     });
-  }
-  else if (request.method === 'image') {
-    response(cache[sender.tab.id]);
-    delete cache[sender.tab.id];
-  }
-  else if (request.method === 'close-me' || request.method === 'resize') {
-    chrome.tabs.sendMessage(sender.tab.id, request);
   }
   else if (request.method === 'open-link') {
     chrome.tabs.create({
       url: request.href,
-      index: sender.tab.index
+      index: sender.tab.index + 1
     });
   }
 });

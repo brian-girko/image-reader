@@ -27,10 +27,11 @@
     "512": "data/icons/512.png"
   },
   "action": {},
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "web_accessible_resources": [{
-    "resources": [
-      "data/ui/index.html"
-    ],
+    "resources": ["/data/engine/index.html"],
     "matches": ["<all_urls>"]
   }]
 }
