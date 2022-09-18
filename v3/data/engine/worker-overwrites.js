@@ -21,7 +21,7 @@ self.fetch = new Proxy(self.fetch, {
 
         return Reflect.apply(target, self, [`https://github.com/naptha/tessdata/blob/gh-pages/${path}?raw=true`, options]).then(validate);
       }).then(r => {
-        return {
+        return Object.assign(r, {
           async arrayBuffer() {
             const reader = r.body.getReader();
             const chunks = [];
@@ -40,16 +40,17 @@ self.fetch = new Proxy(self.fetch, {
               postMessage({
                 status: 'progress',
                 data: {
-                  status: 'loaded language traineddata',
+                  status: 'loading language traineddata',
                   progress: bytes / length
                 }
               });
 
               chunks.push(value);
             }
-            return new Blob(chunks).arrayBuffer();
+            const ab = await new Blob(chunks).arrayBuffer();
+            return ab;
           }
-        };
+        });
       });
     }
     else {

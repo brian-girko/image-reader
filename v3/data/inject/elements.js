@@ -65,8 +65,13 @@
         };
 
         this.locales = {
-          post: 'Post/GET/PUT the result to a server. Use Shift + Click to change the server data',
-          close: 'Close this result. Use Shift + Click to close all results',
+          post: `Post/GET/PUT the result to a server.
+
+Use Shift + Click to change the server data`,
+          close: `Close this result.
+
+Use Shift + Click to close all results.
+Use Ctrl + Click or Command + Click to remove local language training data`,
           tutorial: `Where do you want the data to get posted:
   Server Example:
   &page;
@@ -479,9 +484,13 @@
           this.dispatchEvent(new Event('language-changed'));
         };
         // close
-        this.shadowRoot.getElementById('close').onclick = () => {
+        this.shadowRoot.getElementById('close').onclick = e => {
           this.remove();
-          this.dispatchEvent(new Event('closed'));
+          this.dispatchEvent(new MouseEvent('closed', {
+            shiftKey: e.shiftKey,
+            ctrlKey: e.ctrlKey,
+            metaKey: e.metaKey
+          }));
         };
         // expand
         this.shadowRoot.getElementById('expand').onclick = e => {

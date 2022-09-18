@@ -112,6 +112,13 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       index: sender.tab.index + 1
     });
   }
+  else if (request.method === 'remove-indexeddb') {
+    indexedDB.databases().then(as => {
+      for (const {name} of as) {
+        indexedDB.deleteDatabase(name);
+      }
+    });
+  }
 });
 
 /* FAQs & Feedback */

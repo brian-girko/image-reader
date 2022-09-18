@@ -40,7 +40,7 @@ window.addEventListener('message', async e => {
     parent.postMessage({
       command: 'error',
       id,
-      message: e.message
+      message: e.message || e.toString()
     }, '*');
   }
 

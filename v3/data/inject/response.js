@@ -167,7 +167,17 @@
   em.addEventListener('save-preference', e => {
     chrome.storage.local.set(e.detail);
   });
-  em.addEventListener('closed', () => {
+  em.addEventListener('closed', e => {
+    if (e.metaKey || e.ctrlKey) {
+      chrome.runtime.sendMessage({
+        method: 'remove-indexeddb'
+      });
+    }
+    if (e.shiftKey) {
+      for (const e of document.querySelectorAll('ocr-result')) {
+        e.remove();
+      }
+    }
     if (!document.querySelector('ocr-result')) {
       container.remove();
     }
