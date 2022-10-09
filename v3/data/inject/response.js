@@ -37,13 +37,14 @@
     return self.execute({
       lang,
       src,
+      accuracy: em.dataset.accuracy,
       signal: controller.signal
     }, report);
   };
 
   // if there is oResult object, run in inverted colors
-  const run = em.run = async oResult => {
-    const src = await self.crop(em.href, em.box, oResult ? true : false);
+  const run = em.run = async (oResult, mode = 'normal') => {
+    const src = await self.crop(em.href, em.box, mode);
 
     command('progress', 0);
     command('clear');
@@ -114,7 +115,13 @@
       if (o.confidence < 50 && !oResult) {
         command('message', `Low confidence (${o.confidence}%). Trying with inverted colors. Please wait...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
-        run(o);
+        run(o, 'invert');
+        return;
+      }
+      if (mode === 'invert' && o.confidence < 20 && oResult.confidence < 20) {
+        command('message', `Low confidence (${o.confidence}%) again! Trying with inverted colors. Please wait...`);
+
+        run(o, 'gray');
         return;
       }
       if (oResult) {
@@ -164,6 +171,11 @@
     }
   });
   em.addEventListener('language-changed', () => run());
+  em.addEventListener('accuracy-changed', () => {
+    chrome.runtime.sendMessage({
+      method: 'remove-indexeddb'
+    }, run);
+  });
   em.addEventListener('save-preference', e => {
     chrome.storage.local.set(e.detail);
   });

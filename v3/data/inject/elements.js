@@ -97,10 +97,10 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               --fg: #444;
               --bg: #f1f1f1;
               --bg-result: #fff9ed;
-              --accent: #996600;
+              --accent: #907a4e;
               --width: 400px;
-              --height: 150px;
-              --gap: 5px;
+              --height: 200px;
+              --gap: 10px;
             }
             :host([data-mode='expand']) {
               --height: 70vh;
@@ -127,14 +127,14 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             button,
             input[type=submit],
             input[type=button] {
-              padding: var(--gap);
+              padding: calc(var(--gap) / 2) var(--gap);
               color: var(--fg);
               background-image: linear-gradient(rgb(237, 237, 237), rgb(237, 237, 237) 38%, rgb(222, 222, 222));
               box-shadow: rgba(0, 0, 0, 0.08) 0 1px 0, rgba(255, 255, 255, 0.75) 0 1px 2px inset;
               text-shadow: rgb(240, 240, 240) 0 1px 0;
               border: solid 1px rgba(0, 0, 0, 0.25);
               cursor: pointer;
-              min-width: 80px;
+              font-size: inherit;
             }
             input[type=button]:disabled {
               opacity: 0.5;
@@ -167,17 +167,24 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               justify-items: left;
               grid-gap: var(--gap);
             }
+            .options {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              background: rgba(0, 0, 0, 0.05);
+              margin-bottom: var(--gap);
+              margin-left: -3px;
+            }
+            #accuracy,
             #language {
               border: none;
-              width: 140px;
               text-overflow: ellipsis;
               background-color: transparent;
               outline: none;
-              margin-left: -3px;
+              padding: 5px;
             }
             #tools {
               display: grid;
-              grid-template-columns: repeat(4, min-content);
+              grid-template-columns: repeat(4, 1fr);
               grid-gap: var(--gap);
               justify-content: end;
             }
@@ -187,8 +194,8 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             <div style="display: flex; justify-content: center;">
               <img id="img">
             </div>
-            <div class="grid">
-              <span><select id="language">
+            <div class="options">
+              <select id="language">
                 <optgroup>
                   <option value="detect">Auto Detect (beta)</option>
                 </optgroup>
@@ -297,9 +304,18 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                   <option value="vie">Vietnamese</option>
                   <option value="yid">Yiddish</option>
                 </optgroup>
-              </select></span>
+              </select>
+              <select id="accuracy">
+                <option value='3.02'>Low Accuracy</option>
+                <option value='4.0.0_fast'>Moderate Accuracy</option>
+                <option value='4.0.0'>Better Accuracy</option>
+                <option value='4.0.0_best'>Best Accuracy</option>
+              </select>
+            </div>
+            <div class="grid">
+              <span>Downloading</span>
               <progress id="lang" value="0" max="1"></progress>
-              <span>Recognizing Text</span>
+              <span>Recognizing</span>
               <progress id="recognize" value="0" max="1"></progress>
             </div>
 
@@ -332,6 +348,8 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         }
         // language
         this.language(this.prefs.lang);
+        // accuracy
+        this.accuracy(this.prefs.accuracy);
       }
       build(html) {
         const parser = new DOMParser();
@@ -366,6 +384,10 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
       language(value) {
         this.dataset.language = value;
         this.shadowRoot.getElementById('language').value = value;
+      }
+      accuracy(value) {
+        this.dataset.accuracy = value;
+        this.shadowRoot.getElementById('accuracy').value = value;
       }
       toast(name, messages, timeout = 2000) {
         this.shadowRoot.getElementById(name).value = messages.new;
@@ -482,6 +504,15 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           prefs['frequently-used'] = prefs['frequently-used'].filter((s, i, l) => s && l.indexOf(s) === i).slice(0, 10);
           this.configure(prefs, true);
           this.dispatchEvent(new Event('language-changed'));
+        };
+        // change accuracy
+        this.shadowRoot.getElementById('accuracy').onchange = e => {
+          this.accuracy(e.target.value);
+          const prefs = {
+            'accuracy': e.target.value
+          };
+          this.configure(prefs, true);
+          this.dispatchEvent(new Event('accuracy-changed'));
         };
         // close
         this.shadowRoot.getElementById('close').onclick = e => {

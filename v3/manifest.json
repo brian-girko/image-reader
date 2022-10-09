@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.2",
+  "version": "0.3.4",
   "name": "OCR - Image Reader",
   "description": "A powerful optical character recognition (OCR) extension to capture and convert images to text",
   "permissions": [
@@ -11,7 +11,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://tessdata.projectnaptha.com/4.0.0/*.gz",
+    "https://tessdata.projectnaptha.com/*.gz",
     "https://github.com/naptha/tessdata/blob/gh-pages/*.gz?raw=true"
   ],
   "homepage_url": "https://add0n.com/ocr.html",
