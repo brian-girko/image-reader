@@ -7,20 +7,27 @@ self.fetch = new Proxy(self.fetch, {
   apply(target, self, args) {
     const [href, options] = args;
 
-    const validate = r => {
-      if (r.ok) {
-        return r;
-      }
-      throw Error('Cannot download traineddata (' + r.status + ')');
-    };
-
     if (href.includes('.traineddata.gz')) {
-      return Reflect.apply(target, self, args).then(validate).catch(e => {
-        console.warn('Cannot download the traineddata', href, e);
-        const path = /[\d.]+\/.*$/.exec(href)[0];
+      const validate = r => {
+        if (r.ok) {
+          return r;
+        }
+        throw Error('Cannot download traineddata (' + r.status + ')');
+      };
+      return caches.open('traineddata').then(async cache => {
+        const er = await cache.match(href);
+        if (er) {
+          return er;
+        }
+        const r = await Reflect.apply(target, self, args).then(validate).catch(e => {
+          console.warn('Cannot download the traineddata', href, e);
+          const path = /[\d.]+\/.*$/.exec(href)[0];
 
-        return Reflect.apply(target, self, [`https://github.com/naptha/tessdata/blob/gh-pages/${path}?raw=true`, options]).then(validate);
-      }).then(r => {
+          return Reflect.apply(target, self, [`https://github.com/naptha/tessdata/blob/gh-pages/${path}?raw=true`, options]).then(validate);
+        });
+        // save
+        cache.put(href, r.clone());
+        // return
         return Object.assign(r, {
           async arrayBuffer() {
             const reader = r.body.getReader();

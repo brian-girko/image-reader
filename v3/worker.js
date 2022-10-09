@@ -113,12 +113,23 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     });
   }
   else if (request.method === 'remove-indexeddb') {
+    caches.delete('traineddata');
+
     indexedDB.databases().then(as => {
       for (const {name} of as) {
         indexedDB.deleteDatabase(name);
       }
     });
   }
+});
+
+// We no longer use IndexedDB
+chrome.runtime.onInstalled.addListener(() => {
+  indexedDB.databases().then(as => {
+    for (const {name} of as) {
+      indexedDB.deleteDatabase(name);
+    }
+  });
 });
 
 /* FAQs & Feedback */

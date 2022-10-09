@@ -8,11 +8,20 @@ window.addEventListener('message', async e => {
     'workerBlobURL': false,
     'workerPath': 'worker-overwrites.js',
     'corePath': 'tesseract/tesseract-core.wasm.js',
+    'cacheMethod': 'none',
     logger(report) {
       parent.postMessage({
         command: 'report',
         id,
         report
+      }, '*');
+    },
+    errorHandler(e) {
+      console.warn(e);
+      parent.postMessage({
+        command: 'error',
+        id,
+        message: e.message || e.toString()
       }, '*');
     }
   });

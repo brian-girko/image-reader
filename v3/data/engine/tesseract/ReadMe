@@ -1,4 +1,5 @@
-https://unpkg.com/browse/tesseract.js-core@2.2.0/tesseract-core.wasm
-https://unpkg.com/browse/tesseract.js-core@2.2.0/tesseract-core.wasm.js
-https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js
-https://unpkg.com/tesseract.js@2.1.5/dist/worker.min.js
+https://unpkg.com/tesseract.js-core@3.0.2/tesseract-core.wasm
+https://unpkg.com/tesseract.js-core@3.0.2/tesseract-core.wasm.js
+https://unpkg.com/tesseract.js@3.0.3/dist/tesseract.min.js
+https://unpkg.com/tesseract.js@3.0.3/dist/worker.min.js
+

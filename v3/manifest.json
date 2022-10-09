@@ -5,9 +5,9 @@
   "description": "A powerful optical character recognition (OCR) extension to capture and convert images to text",
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab",
     "notifications",
-    "unlimitedStorage",
     "scripting"
   ],
   "host_permissions": [
