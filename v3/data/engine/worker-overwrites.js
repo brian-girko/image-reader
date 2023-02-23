@@ -21,7 +21,7 @@ self.fetch = new Proxy(self.fetch, {
         }
         const r = await Reflect.apply(target, self, args).then(validate).catch(e => {
           console.warn('Cannot download the traineddata', href, e);
-          const path = /[\d.]+\/.*$/.exec(href)[0];
+          const path = href.split('.com/')[1];
 
           return Reflect.apply(target, self, [`https://github.com/naptha/tessdata/blob/gh-pages/${path}?raw=true`, options]).then(validate);
         });

@@ -169,10 +169,12 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             }
             .options {
               display: grid;
-              grid-template-columns: 1fr 1fr;
+              grid-template-columns: 1fr 1px 1fr;
+              grid-gap: var(--gap);
               background: rgba(0, 0, 0, 0.05);
               margin-bottom: var(--gap);
               margin-left: -3px;
+              align-items: center;
             }
             #accuracy,
             #language {
@@ -180,7 +182,11 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               text-overflow: ellipsis;
               background-color: transparent;
               outline: none;
-              padding: 5px;
+              padding: calc(var(--gap) / 2) 0;
+            }
+            .sep {
+              background-color: #b7ae9a;
+              height: 15px;
             }
             #tools {
               display: grid;
@@ -305,6 +311,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                   <option value="yid">Yiddish</option>
                 </optgroup>
               </select>
+              <span class="sep"></span>
               <select id="accuracy">
                 <option value='3.02'>Low Accuracy</option>
                 <option value='4.0.0_fast'>Moderate Accuracy</option>
