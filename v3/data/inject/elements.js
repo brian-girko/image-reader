@@ -242,6 +242,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                   <option value="ita_old">Italian - Old</option>
                   <option value="jav">Javanese</option>
                   <option value="jpn">Japanese</option>
+                  <option value="jpn_vert">Japanese - Vertical</option>
                   <option value="kan">Kannada</option>
                   <option value="kat">Georgian</option>
                   <option value="kat_old">Georgian - Old</option>
