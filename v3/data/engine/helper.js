@@ -27,7 +27,8 @@ if (typeof self.execute === 'undefined') {
   self.execute = ({
     signal,
     lang,
-    src
+    src,
+    accuracy = '4.0.0'
   }, report) => new Promise((resolve, reject) => {
     const frame = document.createElement('iframe');
     const id = 'worker-' + Math.random();
@@ -36,7 +37,8 @@ if (typeof self.execute === 'undefined') {
     frame.style.display = 'none';
     frame.onload = () => frame.contentWindow.postMessage({
       lang,
-      src
+      src,
+      accuracy
     }, '*');
     document.documentElement.append(frame);
 
@@ -44,7 +46,7 @@ if (typeof self.execute === 'undefined') {
   });
 }
 
-self.crop = (href, {width, height, left, top}, reverse = false) => new Promise(resolve => {
+self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise(resolve => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const img = new Image();
@@ -57,12 +59,13 @@ self.crop = (href, {width, height, left, top}, reverse = false) => new Promise(r
     else {
       ctx.drawImage(img, 0, 0);
     }
-    if (reverse) {
-      ctx.globalCompositeOperation = 'difference';
+    if (mode === 'invert' || mode === 'gray') {
+      ctx.globalCompositeOperation = mode === 'gray' ? 'saturation' : 'difference';
       ctx.fillStyle = '#fff';
       ctx.globalAlpha = 1;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+
     resolve(canvas.toDataURL());
   };
   img.src = href;

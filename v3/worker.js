@@ -35,7 +35,7 @@ chrome.action.onClicked.addListener(async tab => {
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender) => {
+chrome.runtime.onMessage.addListener((request, sender, response) => {
   if (request.method === 'captured' || request.method === 'aborted') {
     chrome.action.setIcon({
       tabId: sender.tab.id,
@@ -79,7 +79,8 @@ chrome.runtime.onMessage.addListener((request, sender) => {
           'post-href': '',
           'post-body': '',
           'lang': 'eng',
-          'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara']
+          'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara'],
+          'accuracy': '4.0.0'
         }, prefs => chrome.scripting.executeScript({
           target,
           func: (prefs, href, box) => {
@@ -113,12 +114,25 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     });
   }
   else if (request.method === 'remove-indexeddb') {
+    caches.delete('traineddata').finally(response);
+
     indexedDB.databases().then(as => {
       for (const {name} of as) {
         indexedDB.deleteDatabase(name);
       }
     });
+
+    return true;
   }
+});
+
+// We no longer use IndexedDB
+chrome.runtime.onInstalled.addListener(() => {
+  indexedDB.databases().then(as => {
+    for (const {name} of as) {
+      indexedDB.deleteDatabase(name);
+    }
+  });
 });
 
 /* FAQs & Feedback */
