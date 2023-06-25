@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.3.5",
+  "version": "0.3.6",
   "name": "OCR - Image Reader",
   "description": "A powerful optical character recognition (OCR) extension to capture and convert images to text",
   "permissions": [

@@ -29,7 +29,7 @@ window.addEventListener('message', e => {
     }
   }).then(async worker => {
     try {
-      await worker.load();
+      // await worker.load();
       await worker.loadLanguage(request.lang);
       await worker.initialize(request.lang);
 
