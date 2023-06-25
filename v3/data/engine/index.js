@@ -25,7 +25,7 @@ window.addEventListener('message', async e => {
     await worker.initialize(request.lang);
 
     await worker.setParameters({
-      tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+      tessedit_pageseg_mode: request.lang === 'jpn_vert' ? Tesseract.PSM.SINGLE_BLOCK_VERT_TEXT : Tesseract.PSM.SINGLE_BLOCK,
       tessedit_ocr_engine_mode: Tesseract.DEFAULT
     });
     const result = (await worker.recognize(request.src)).data;
