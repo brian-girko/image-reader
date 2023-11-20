@@ -6,7 +6,7 @@ const id = args.get('id');
 window.addEventListener('message', e => {
   const request = e.data;
 
-  Tesseract.createWorker({
+  Tesseract.createWorker(request.lang, 1, {
     'workerBlobURL': false,
     'workerPath': 'worker-overwrites.js',
     'corePath': 'tesseract/tesseract-core.wasm.js',
@@ -29,16 +29,16 @@ window.addEventListener('message', e => {
     }
   }).then(async worker => {
     try {
-      // await worker.load();
-      await worker.loadLanguage(request.lang);
-      await worker.initialize(request.lang);
-
-      await worker.setParameters({
-        tessedit_pageseg_mode: request.lang === 'jpn_vert' ? Tesseract.PSM.SINGLE_BLOCK_VERT_TEXT : Tesseract.PSM.SINGLE_BLOCK,
-        tessedit_ocr_engine_mode: Tesseract.DEFAULT
-      });
+      // https://github.com/tesseract-ocr/tesseract/blob/main/src/ccmain/tesseractclass.cpp
+      const params = {};
+      if (request.lang.endsWith('_vert')) {
+        params['tessedit_pageseg_mode'] = Tesseract.PSM.SINGLE_BLOCK_VERT_TEXT;
+      }
+      // params['preserve_interword_spaces'] = '1';
+      await worker.setParameters(params);
 
       const result = (await worker.recognize(request.src)).data;
+
       parent.postMessage({
         command: 'result',
         id,

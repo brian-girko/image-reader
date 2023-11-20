@@ -3,11 +3,11 @@
 // https://www.google.com/search?q=english+text&tbm=isch
 
 {
-  const HTMLElement = HTMLDivElement.__proto__;
+  // const HTMLElement = HTMLDivElement.__proto__;
   const get = CustomElementRegistry.prototype.get.bind(customElements);
   const define = CustomElementRegistry.prototype.define.bind(customElements);
 
-  if (get('ocr-container') === undefined) {
+  if (customElements.get('ocr-container') === undefined) {
     // This document requires 'TrustedHTML' assignment
     self.trustedTypes?.createPolicy('default', {
       createHTML(s) {
@@ -45,10 +45,10 @@
       }
     }
     // customElements.define('ocr-container', OCRContainer);
-    define('ocr-container', OCRContainer);
+    customElements.define('ocr-container', OCRContainer);
   }
 
-  if (get('ocr-result') === undefined) {
+  if (customElements.get('ocr-result') === undefined) {
     class OCRResult extends HTMLElement {
       constructor() {
         super();
@@ -551,7 +551,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
     }
 
     // customElements.define('ocr-result', OCRResult);
-    define('ocr-result', OCRResult);
+    customElements.define('ocr-result', OCRResult);
   }
 }
 

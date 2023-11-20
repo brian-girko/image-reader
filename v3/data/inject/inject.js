@@ -60,7 +60,7 @@ capture = (function() {
 
     document.addEventListener('mousemove', update);
     document.addEventListener('mouseup', remove);
-    document.body.appendChild(box);
+    document.documentElement.appendChild(box);
   }
 
   return {
@@ -97,9 +97,7 @@ guide = (function() {
       guide1.setAttribute('class', 'itrisearch-guide-1');
       guide2.setAttribute('class', 'itrisearch-guide-2');
       guide3.setAttribute('class', 'itrisearch-guide-3');
-      document.body.appendChild(guide3);
-      document.body.appendChild(guide1);
-      document.body.appendChild(guide2);
+      document.documentElement.append(guide3, guide1, guide2);
       document.addEventListener('mousemove', update, false);
     },
     remove() {

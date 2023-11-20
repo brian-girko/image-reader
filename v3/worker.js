@@ -62,8 +62,11 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         };
         await chrome.scripting.executeScript({
           target,
-          files: ['/data/inject/elements.js'],
-          world: 'MAIN'
+          files: ['/data/inject/custom-elements.min.js']
+        });
+        await chrome.scripting.executeScript({
+          target,
+          files: ['/data/inject/elements.js']
         });
         await chrome.scripting.executeScript({
           target,
