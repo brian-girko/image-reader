@@ -11,12 +11,10 @@
   em.dataset.page = chrome.runtime.getManifest().homepage_url + '#faq8';
   container.append(em);
 
-  const command = em.command = (name, ...args) => em.dispatchEvent(new CustomEvent('command', {
-    detail: {
-      name,
-      args
-    }
-  }));
+  const command = em.command = /Firefox/.test(navigator.userAgent) ? (name, ...args) => {
+    em.setAttribute('command', JSON.stringify({name, args}));
+    em.dispatchEvent(new Event('command'));
+  } : (name, ...args) => em[name](...args);
 
   const ocr = (lang, src) => {
     const report = report => {

@@ -4,6 +4,7 @@ if (typeof self.execute === 'undefined') {
   const observe = e => {
     if (e.data) {
       const {command, id, report, result, message} = e.data;
+
       if (methods[id]) {
         if (command === 'report') {
           methods[id].report(report);
@@ -70,3 +71,5 @@ self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise(r
   };
   img.src = href;
 });
+
+''

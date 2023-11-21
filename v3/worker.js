@@ -31,6 +31,7 @@ chrome.action.onClicked.addListener(async tab => {
     });
   }
   catch (e) {
+    console.error(e);
     notify(e);
   }
 });
@@ -60,14 +61,26 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         const target = {
           tabId: sender.tab.id
         };
-        await chrome.scripting.executeScript({
-          target,
-          files: ['/data/inject/custom-elements.min.js']
-        });
-        await chrome.scripting.executeScript({
-          target,
-          files: ['/data/inject/elements.js']
-        });
+        if (/Firefox/.test(navigator.userAgent) === false) {
+          await chrome.scripting.executeScript({
+            target,
+            files: ['/data/inject/custom-elements.min.js']
+          });
+          await chrome.scripting.executeScript({
+            target,
+            files: ['/data/inject/elements.js']
+          });
+        }
+        else {
+          await chrome.scripting.executeScript({
+            target,
+            func: () => {
+              const s = document.createElement('script');
+              s.src = chrome.runtime.getURL('/data/inject/elements.js');
+              document.body.append(s);
+            }
+          });
+        }
         await chrome.scripting.executeScript({
           target,
           files: ['/data/engine/helper.js']
@@ -88,7 +101,6 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
           target,
           func: (prefs, href, box) => {
             const em = document.querySelector('ocr-result:last-of-type');
-
             em.command('configure', prefs);
             em.command('prepare');
 
@@ -106,6 +118,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         }));
       }
       catch (e) {
+        console.error(e);
         notify(e);
       }
     });
@@ -118,12 +131,14 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
   else if (request.method === 'remove-indexeddb') {
     caches.delete('traineddata').finally(response);
-
-    indexedDB.databases().then(as => {
-      for (const {name} of as) {
-        indexedDB.deleteDatabase(name);
-      }
-    });
+    try {
+      indexedDB.databases().then(as => {
+        for (const {name} of as) {
+          indexedDB.deleteDatabase(name);
+        }
+      });
+    }
+    catch (e) {}
 
     return true;
   }
@@ -131,11 +146,14 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 
 // We no longer use IndexedDB
 chrome.runtime.onInstalled.addListener(() => {
-  indexedDB.databases().then(as => {
-    for (const {name} of as) {
-      indexedDB.deleteDatabase(name);
-    }
-  });
+  try {
+    indexedDB.databases().then(as => {
+      for (const {name} of as) {
+        indexedDB.deleteDatabase(name);
+      }
+    });
+  }
+  catch (e) {}
 });
 
 /* FAQs & Feedback */

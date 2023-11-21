@@ -3,10 +3,6 @@
 // https://www.google.com/search?q=english+text&tbm=isch
 
 {
-  // const HTMLElement = HTMLDivElement.__proto__;
-  const get = CustomElementRegistry.prototype.get.bind(customElements);
-  const define = CustomElementRegistry.prototype.define.bind(customElements);
-
   if (customElements.get('ocr-container') === undefined) {
     // This document requires 'TrustedHTML' assignment
     self.trustedTypes?.createPolicy('default', {
@@ -44,7 +40,6 @@
         `;
       }
     }
-    // customElements.define('ocr-container', OCRContainer);
     customElements.define('ocr-container', OCRContainer);
   }
 
@@ -536,10 +531,9 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           this.dataset.mode = this.dataset.mode === 'expand' ? 'collapse' : 'expand';
           e.target.value = this.dataset.mode === 'expand' ? 'Collapse' : 'Expand';
         };
-        // apply commands on cross-origin
-        this.addEventListener('command', e => {
-          const {name, args} = e.detail;
-
+        // apply commands on cross-origin (Firefox Only)
+        this.addEventListener('command', () => {
+          const {name, args} = JSON.parse(this.getAttribute('command'));
           this[name](...args);
         });
         // constants
@@ -549,8 +543,6 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           .join(', ');
       }
     }
-
-    // customElements.define('ocr-result', OCRResult);
     customElements.define('ocr-result', OCRResult);
   }
 }

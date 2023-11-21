@@ -6,10 +6,12 @@ const id = args.get('id');
 window.addEventListener('message', e => {
   const request = e.data;
 
-  Tesseract.createWorker(request.lang, 1, {
+  Tesseract.createWorker(request.lang, 1, { // 1: Tesseract LSTM, 0: Tesseract Legacy
     'workerBlobURL': false,
     'workerPath': 'worker-overwrites.js',
-    'corePath': 'tesseract/tesseract-core.wasm.js',
+    // tesseract-core-simd.wasm.js has significantly faster recognition speeds (for Tesseract LSTM, the default model)
+    // compared to the build without SIMD support
+    'corePath': 'tesseract/tesseract-core-simd-lstm.wasm.js',
     'cacheMethod': 'none',
     'langPath': 'https://tessdata.projectnaptha.com/' + request.accuracy,
     logger(report) {
