@@ -1,20 +1,11 @@
 'use strict';
 
 {
-  // container
-  const container = document.querySelector('ocr-container') || document.createElement('ocr-container');
-  if (container.isConnected === false) {
-    document.body.append(container);
-  }
-
   const em = document.createElement('ocr-result');
   em.dataset.page = chrome.runtime.getManifest().homepage_url + '#faq8';
-  container.append(em);
+  document.body.append(em);
 
-  const command = em.command = /Firefox/.test(navigator.userAgent) ? (name, ...args) => {
-    em.setAttribute('command', JSON.stringify({name, args}));
-    em.dispatchEvent(new Event('command'));
-  } : (name, ...args) => em[name](...args);
+  const command = em.command = (name, ...args) => em[name](...args);
 
   const ocr = (lang, src) => {
     const report = report => {
@@ -182,14 +173,6 @@
       chrome.runtime.sendMessage({
         method: 'remove-indexeddb'
       });
-    }
-    if (e.shiftKey) {
-      for (const e of document.querySelectorAll('ocr-result')) {
-        e.remove();
-      }
-    }
-    if (!document.querySelector('ocr-result')) {
-      container.remove();
     }
   });
 

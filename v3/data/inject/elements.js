@@ -3,46 +3,6 @@
 // https://www.google.com/search?q=english+text&tbm=isch
 
 {
-  if (customElements.get('ocr-container') === undefined) {
-    // This document requires 'TrustedHTML' assignment
-    self.trustedTypes?.createPolicy('default', {
-      createHTML(s) {
-        return s;
-      }
-    });
-
-    class OCRContainer extends HTMLElement {
-      constructor() {
-        super();
-
-        const shadow = this.attachShadow({mode: 'open'});
-        shadow.innerHTML = `
-          <style>
-            #body {
-              position: fixed;
-              bottom: 10px;
-              right: 30px;
-              padding: 5px;
-              z-index: 10000000000;
-              box-shadow: 0 0 2px #ccc;
-              display: flex;
-              gap: 5px;
-              flex-direction: column;
-              background-color: #fff;
-              max-height: calc(100vh - 20px);
-              color-scheme: light;
-              overflow: auto;
-            }
-          </style>
-          <div id="body">
-            <slot></slot>
-          </div>
-        `;
-      }
-    }
-    customElements.define('ocr-container', OCRContainer);
-  }
-
   if (customElements.get('ocr-result') === undefined) {
     class OCRResult extends HTMLElement {
       constructor() {
@@ -98,7 +58,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               --gap: 10px;
             }
             :host([data-mode='expand']) {
-              --height: 70vh;
+              --height: 600px;
             }
             #body {
               font-size: 13px;
@@ -107,7 +67,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               display: flex;
               flex-direction: column;
               height: var(--height);
-              width: min(var(--width), calc(100vw, 2rem));
+              width: calc(100% - var(--gap) * 2);
               color: var(--fg);
               background-color: var(--bg);
               color-scheme: light;
@@ -530,6 +490,9 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         this.shadowRoot.getElementById('expand').onclick = e => {
           this.dataset.mode = this.dataset.mode === 'expand' ? 'collapse' : 'expand';
           e.target.value = this.dataset.mode === 'expand' ? 'Collapse' : 'Expand';
+          this.dispatchEvent(new CustomEvent('mode-changed', {
+            detail: this.dataset.mode
+          }));
         };
         // apply commands on cross-origin (Firefox Only)
         this.addEventListener('command', () => {

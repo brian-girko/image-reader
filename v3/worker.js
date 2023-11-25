@@ -13,20 +13,20 @@ chrome.action.onClicked.addListener(async tab => {
       target: {
         tabId: tab.id
       },
-      files: ['data/inject/inject.css']
+      files: ['/data/inject/inject.css']
     });
     await chrome.scripting.executeScript({
       target: {
         tabId: tab.id
       },
-      files: ['data/inject/inject.js']
+      files: ['/data/inject/inject.js']
     });
     chrome.action.setIcon({
       tabId: tab.id,
       path: {
-        '16': 'data/icons/inspect/16.png',
-        '32': 'data/icons/inspect/32.png',
-        '48': 'data/icons/inspect/48.png'
+        '16': '/data/icons/inspect/16.png',
+        '32': '/data/icons/inspect/32.png',
+        '48': '/data/icons/inspect/48.png'
       }
     });
   }
@@ -41,86 +41,60 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     chrome.action.setIcon({
       tabId: sender.tab.id,
       path: {
-        '16': 'data/icons/16.png',
-        '32': 'data/icons/32.png',
-        '48': 'data/icons/48.png'
+        '16': '/data/icons/16.png',
+        '32': '/data/icons/32.png',
+        '48': '/data/icons/48.png'
       }
     });
   }
   //
   if (request.method === 'captured') {
-    const {devicePixelRatio, left, top, width, height} = request;
+    const {width, height} = request;
 
     if (!width || !height) {
       return notify('Please select a region. Either width or height of the captured area was zero');
     }
     chrome.tabs.captureVisibleTab(sender.tab.windowId, {
       format: 'png'
-    }, async href => {
-      try {
-        const target = {
+    }, href => {
+      chrome.scripting.executeScript({
+        target: {
           tabId: sender.tab.id
-        };
-        if (/Firefox/.test(navigator.userAgent) === false) {
-          await chrome.scripting.executeScript({
-            target,
-            files: ['/data/inject/custom-elements.min.js']
-          });
-          await chrome.scripting.executeScript({
-            target,
-            files: ['/data/inject/elements.js']
-          });
-        }
-        else {
-          await chrome.scripting.executeScript({
-            target,
-            func: () => {
-              const s = document.createElement('script');
-              s.src = chrome.runtime.getURL('/data/inject/elements.js');
-              document.body.append(s);
-            }
-          });
-        }
-        await chrome.scripting.executeScript({
-          target,
-          files: ['/data/engine/helper.js']
-        });
-        await chrome.scripting.executeScript({
-          target,
-          files: ['/data/inject/response.js']
-        });
-        // start
-        chrome.storage.local.get({
-          'post-method': 'POST',
-          'post-href': '',
-          'post-body': '',
-          'lang': 'eng',
-          'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara'],
-          'accuracy': '4.0.0'
-        }, prefs => chrome.scripting.executeScript({
-          target,
-          func: (prefs, href, box) => {
-            const em = document.querySelector('ocr-result:last-of-type');
-            em.command('configure', prefs);
-            em.command('prepare');
-
-            em.href = href;
-            em.box = box;
-
-            em.run();
-          },
-          args: [prefs, href, {
-            width: width * devicePixelRatio,
-            height: height * devicePixelRatio,
-            left: left * devicePixelRatio,
-            top: top * devicePixelRatio
-          }]
-        }));
-      }
-      catch (e) {
-        console.error(e);
-        notify(e);
-      }
+        },
+        func: (href, request) => {
+          const f = document.querySelector('iframe.gfrunj');
+          if (f) {
+            f.contentWindow.postMessage({
+              method: 'proceed',
+              href,
+              request
+            }, '*');
+          }
+          else {
+            const e = document.createElement('iframe');
+            e.classList.add('gfrunj');
+            e.style = `
+              position: fixed;
+              height: 240px;
+              width: min(500px, calc(100vw - 2rem));
+              border: none;
+              box-shadow: 0 0 0 1px #e5e5e5;
+              bottom: 10px;
+              right: 10px;
+              color-scheme: light;
+              z-index: 2147483647;
+            `;
+            e.onload = () => e.contentWindow.postMessage({
+              method: 'proceed',
+              href,
+              request
+            }, '*');
+            e.src = chrome.runtime.getURL('/data/inject/sandbox.html');
+            document.documentElement.append(e);
+          }
+        },
+        args: [href, request]
+      });
     });
   }
   else if (request.method === 'open-link') {
@@ -141,6 +115,27 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     catch (e) {}
 
     return true;
+  }
+  else if (request.method === 'resize') {
+    chrome.scripting.executeScript({
+      target: {
+        tabId: sender.tab.id
+      },
+      func: height => {
+        document.querySelector('iframe.gfrunj').style.height = height;
+      },
+      args: [request.height]
+    });
+  }
+  else if (request.method === 'remove-iframe') {
+    chrome.scripting.executeScript({
+      target: {
+        tabId: sender.tab.id
+      },
+      func: () => {
+        document.querySelector('iframe.gfrunj').remove();
+      }
+    });
   }
 });
 
