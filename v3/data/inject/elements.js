@@ -111,7 +111,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             #result .ocr_par:last-child {
               margin-bottom: 0;
             }
-            .ocr_line {
+            #result  .ocr_line {
               display: block;
             }
             .grid {

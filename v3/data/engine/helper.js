@@ -72,4 +72,5 @@ self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise(r
   img.src = href;
 });
 
+// eslint-disable-next-line semi
 ''

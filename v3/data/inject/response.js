@@ -81,7 +81,9 @@
           if (r.r.languages.length) {
             const ln = r.r.languages[0].language;
 
-            const e = r.lang.startsWith(ln) ? r.lang : em.dataset.languages.split(', ').filter(s => s.startsWith(ln)).shift();
+            const e = r.lang.startsWith(ln) ?
+              r.lang :
+              em.dataset.languages.split(', ').filter(s => s.startsWith(ln)).shift();
 
             if (e) {
               if (a.some(o => o.lang === e)) {
@@ -120,7 +122,10 @@
       }
 
       if (o.text.trim() === '') {
-        command('build', '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>');
+        command(
+          'build',
+          '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>'
+        );
       }
       else {
         command('build', o.hocr);

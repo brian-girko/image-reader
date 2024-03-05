@@ -75,7 +75,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
             e.classList.add('gfrunj');
             e.style = `
               position: fixed;
-              height: 240px;
+              height: 0;
               width: min(500px, calc(100vw - 2rem));
               border: none;
               box-shadow: 0 0 0 1px #e5e5e5;
