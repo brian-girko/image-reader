@@ -8,7 +8,9 @@ onmessage = e => {
       'post-body': '',
       'lang': 'eng',
       'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara'],
-      'accuracy': '4.0.0'
+      'accuracy': '4.0.0',
+      'close-after': -1,
+      'auto-clipboard': false
     }, prefs => {
       const s = document.createElement('script');
       s.src = '/data/inject/response.js';
