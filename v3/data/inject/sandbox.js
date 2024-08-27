@@ -1,7 +1,22 @@
-onmessage = e => {
-  if (e.data && e.data.method === 'proceed') {
-    const {href, request} = e.data;
-
+// eslint-disable-next-line no-unused-vars
+const service = {
+  busy: false,
+  jobs: [],
+  next() {
+    service.busy = false;
+    const job = service.jobs.shift();
+    if (job) {
+      service.run(job);
+    }
+  },
+  add(job) {
+    service.jobs.push(job);
+    if (service.busy === false) {
+      service.next();
+    }
+  },
+  run({href, request}) {
+    service.busy = true;
     chrome.storage.local.get({
       'post-method': 'POST',
       'post-href': '',
@@ -50,5 +65,11 @@ onmessage = e => {
       };
       document.body.append(s);
     });
+  }
+};
+
+onmessage = e => {
+  if (e.data && e.data.method === 'proceed') {
+    service.run(e.data);
   }
 };

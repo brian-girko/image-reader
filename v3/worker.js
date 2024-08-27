@@ -5,6 +5,45 @@ const notify = e => chrome.notifications.create({
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
   message: e.message || e
+}, id => setTimeout(() => chrome.notifications.clear(id), 5000));
+
+const proceed = (tabId, href, request) => chrome.scripting.executeScript({
+  target: {
+    tabId
+  },
+  func: (href, request) => {
+    const f = document.querySelector('iframe.gfrunj');
+    if (f) {
+      f.contentWindow.postMessage({
+        method: 'proceed',
+        href,
+        request
+      }, '*');
+    }
+    else {
+      const e = document.createElement('iframe');
+      e.classList.add('gfrunj');
+      e.style = `
+        position: fixed;
+        height: 0;
+        width: min(500px, calc(100vw - 2rem));
+        border: none;
+        box-shadow: 0 0 0 1px #e5e5e5;
+        bottom: 10px;
+        right: 10px;
+        color-scheme: light;
+        z-index: 2147483647;
+      `;
+      e.onload = () => e.contentWindow.postMessage({
+        method: 'proceed',
+        href,
+        request
+      }, '*');
+      e.src = chrome.runtime.getURL('/data/inject/sandbox.html');
+      document.documentElement.append(e);
+    }
+  },
+  args: [href, request]
 });
 
 chrome.action.onClicked.addListener(async tab => {
@@ -57,44 +96,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     chrome.tabs.captureVisibleTab(sender.tab.windowId, {
       format: 'png'
     }, href => {
-      chrome.scripting.executeScript({
-        target: {
-          tabId: sender.tab.id
-        },
-        func: (href, request) => {
-          const f = document.querySelector('iframe.gfrunj');
-          if (f) {
-            f.contentWindow.postMessage({
-              method: 'proceed',
-              href,
-              request
-            }, '*');
-          }
-          else {
-            const e = document.createElement('iframe');
-            e.classList.add('gfrunj');
-            e.style = `
-              position: fixed;
-              height: 0;
-              width: min(500px, calc(100vw - 2rem));
-              border: none;
-              box-shadow: 0 0 0 1px #e5e5e5;
-              bottom: 10px;
-              right: 10px;
-              color-scheme: light;
-              z-index: 2147483647;
-            `;
-            e.onload = () => e.contentWindow.postMessage({
-              method: 'proceed',
-              href,
-              request
-            }, '*');
-            e.src = chrome.runtime.getURL('/data/inject/sandbox.html');
-            document.documentElement.append(e);
-          }
-        },
-        args: [href, request]
-      });
+      proceed(sender.tab.id, href, request);
     });
   }
   else if (request.method === 'open-link') {
@@ -155,8 +157,7 @@ chrome.runtime.onInstalled.addListener(() => {
 {
   const {management, runtime: {onInstalled, setUninstallURL, getManifest}, storage, tabs} = chrome;
   if (navigator.webdriver !== true) {
-    const page = getManifest().homepage_url;
-    const {name, version} = getManifest();
+    const {homepage_url: page, name, version} = getManifest();
     onInstalled.addListener(({reason, previousVersion}) => {
       management.getSelf(({installType}) => installType === 'normal' && storage.local.get({
         'faqs': true,
@@ -165,7 +166,7 @@ chrome.runtime.onInstalled.addListener(() => {
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
           const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
           if (doUpdate && previousVersion !== version) {
-            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
+            tabs.query({active: true, lastFocusedWindow: true}, tbs => tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
               active: reason === 'install',
               ...(tbs && tbs.length && {index: tbs[0].index + 1})

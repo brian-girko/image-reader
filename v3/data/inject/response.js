@@ -1,9 +1,14 @@
+/* global service */
 'use strict';
 
 {
   const em = document.createElement('ocr-result');
   em.dataset.page = chrome.runtime.getManifest().homepage_url + '#faq8';
   document.body.append(em);
+  try {
+    em.scrollIntoViewIfNeeded();
+  }
+  catch (e) {}
 
   const command = em.command = (name, ...args) => em[name](...args);
 
@@ -136,6 +141,8 @@
       console.warn(e);
       command('message', e.message || e);
     }
+    console.log('done');
+    service.next();
   };
 
   // events
@@ -188,22 +195,26 @@
       e.preventDefault();
     }
   });
-  em.addEventListener('drop', e => {
-    const entry = [...e.dataTransfer.files].filter(e => e.type && e.type.startsWith('image/')).shift();
-    if (entry) {
-      e.preventDefault();
-      const reader = new FileReader();
-      reader.onload = () => {
-        em.href = reader.result;
-        em.box = {
-          left: 0,
-          top: 0,
-          width: 0,
-          height: 0
+  em.addEventListener('drop', async e => {
+    e.preventDefault();
+    for (const entry of [...e.dataTransfer.files].filter(e => e.type && e.type.startsWith('image/'))) {
+      await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          service.add({
+            method: 'add-job',
+            href: reader.result,
+            request: {
+              left: 0,
+              top: 0,
+              width: 0,
+              height: 0
+            }
+          });
+          resolve();
         };
-        em.run();
-      };
-      reader.readAsDataURL(entry);
+        reader.readAsDataURL(entry);
+      });
     }
   });
 }

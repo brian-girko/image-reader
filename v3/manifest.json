@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "name": "OCR - Image Reader",
   "description": "A powerful optical character recognition (OCR) extension to capture and convert images to text",
   "permissions": [
@@ -16,16 +16,17 @@
   ],
   "homepage_url": "https://webextension.org/listing/ocr.html",
   "background": {
-    "service_worker": "worker.js"
+    "service_worker": "worker.js",
+    "scripts": ["worker.js"]
   },
   "icons": {
-    "16": "data/icons/16.png",
-    "32": "data/icons/32.png",
-    "48": "data/icons/48.png",
-    "64": "data/icons/64.png",
-    "128": "data/icons/128.png",
-    "256": "data/icons/256.png",
-    "512": "data/icons/512.png"
+    "16": "/data/icons/16.png",
+    "32": "/data/icons/32.png",
+    "48": "/data/icons/48.png",
+    "64": "/data/icons/64.png",
+    "128": "/data/icons/128.png",
+    "256": "/data/icons/256.png",
+    "512": "/data/icons/512.png"
   },
   "action": {},
   "content_security_policy": {
@@ -34,5 +35,11 @@
   "web_accessible_resources": [{
     "resources": ["/data/engine/index.html", "/data/inject/sandbox.html"],
     "matches": ["<all_urls>"]
-  }]
+  }],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{e4c6eef1-8b3b-4daa-8757-707702e7528d}",
+      "strict_min_version": "128.0"
+    }
+  }
 }
