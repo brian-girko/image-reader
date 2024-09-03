@@ -10,6 +10,9 @@
     "notifications",
     "scripting"
   ],
+  "optional_permissions": [
+    "clipboardWrite"
+  ],
   "host_permissions": [
     "https://tessdata.projectnaptha.com/*.gz",
     "https://github.com/naptha/tessdata/blob/gh-pages/*.gz?raw=true"
@@ -36,6 +39,9 @@
     "resources": ["/data/engine/index.html", "/data/inject/sandbox.html"],
     "matches": ["<all_urls>"]
   }],
+  "commands": {
+    "_execute_action": {}
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "{e4c6eef1-8b3b-4daa-8757-707702e7528d}",

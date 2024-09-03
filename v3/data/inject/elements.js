@@ -420,6 +420,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             await navigator.clipboard.writeText(this.result);
           }
           catch (e) {
+            // console.info('Copy failed. Trying alternative method', e);
             const input = document.createElement('textarea');
             input.value = this.result;
             input.style.position = 'absolute';

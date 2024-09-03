@@ -139,6 +139,12 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       }
     });
   }
+  else if (request.method === 'clipboard-permission') {
+    chrome.permissions.request({
+      permissions: ['clipboardWrite']
+    }, response);
+    return true;
+  }
 });
 
 // We no longer use IndexedDB

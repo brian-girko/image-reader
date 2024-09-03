@@ -141,7 +141,6 @@
       console.warn(e);
       command('message', e.message || e);
     }
-    console.log('done');
     service.next();
   };
 
@@ -178,7 +177,18 @@
     }, run);
   });
   em.addEventListener('save-preference', e => {
-    chrome.storage.local.set(e.detail);
+    const prefs = e.detail;
+    if ('auto-clipboard' in prefs && prefs['auto-clipboard']) {
+      chrome.runtime.sendMessage({
+        method: 'clipboard-permission'
+      }, granted => {
+        if (granted === undefined) {
+          alert(`Please enable the "Input data to the clipboard" permission for this extension in the browser's extensions manager.`);
+        }
+      });
+    }
+
+    chrome.storage.local.set(prefs);
   });
   em.addEventListener('closed', e => {
     if (e.metaKey || e.ctrlKey) {

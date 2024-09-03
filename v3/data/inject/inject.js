@@ -1,8 +1,5 @@
+/* global guide, capture, monitor */
 'use strict';
-
-var monitor = window.monitor;
-var capture = window.capture;
-var guide = window.guide;
 
 try {
   guide.remove();
@@ -11,7 +8,7 @@ try {
 }
 catch (e) {}
 
-capture = (function() {
+self.capture = (function() {
   const rect = {};
   let box;
 
@@ -78,7 +75,7 @@ capture = (function() {
   };
 })();
 
-guide = (function() {
+self.guide = (function() {
   let guide1;
   let guide2;
   let guide3;
@@ -110,7 +107,7 @@ guide = (function() {
   };
 })();
 
-monitor = (function() {
+self.monitor = (function() {
   const keydown = e => {
     if (e.code === 'Escape') {
       guide.remove();
@@ -123,10 +120,10 @@ monitor = (function() {
   };
   return {
     install() {
-      window.addEventListener('keydown', keydown);
+      addEventListener('keydown', keydown);
     },
     remove() {
-      window.removeEventListener('keydown', keydown);
+      removeEventListener('keydown', keydown);
     }
   };
 })();
