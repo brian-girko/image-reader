@@ -54,12 +54,7 @@ chrome.action.onClicked.addListener(async tab => {
       },
       files: ['/data/inject/inject.css']
     });
-    await chrome.scripting.executeScript({
-      target: {
-        tabId: tab.id
-      },
-      files: ['/data/inject/inject.js']
-    });
+    // set icon here since we might toggle back if the capturing mode is active
     chrome.action.setIcon({
       tabId: tab.id,
       path: {
@@ -67,6 +62,12 @@ chrome.action.onClicked.addListener(async tab => {
         '32': '/data/icons/inspect/32.png',
         '48': '/data/icons/inspect/48.png'
       }
+    });
+    await chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      files: ['/data/inject/inject.js']
     });
   }
   catch (e) {
