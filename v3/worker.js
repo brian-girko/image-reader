@@ -5,7 +5,7 @@ const notify = e => chrome.notifications.create({
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
   message: e.message || e
-}, id => setTimeout(() => chrome.notifications.clear(id), 5000));
+}, id => setTimeout(() => chrome.notifications.clear(id), 3000));
 
 const proceed = (tabId, href, request) => chrome.scripting.executeScript({
   target: {

@@ -3,7 +3,7 @@
 const args = new URLSearchParams(location.search);
 const id = args.get('id');
 
-window.addEventListener('message', e => {
+addEventListener('message', e => {
   const request = e.data;
 
   Tesseract.createWorker(request.lang, 1, { // 1: Tesseract LSTM, 0: Tesseract Legacy
@@ -41,7 +41,9 @@ window.addEventListener('message', e => {
       }
       await worker.setParameters(params);
 
-      const result = (await worker.recognize(request.src)).data;
+      const result = (await worker.recognize(request.src, {}, {
+        hocr: true
+      })).data;
 
       if (['chi_sim', 'chi_tra', 'jpn', 'jpn_vert', 'kor', 'tha'].includes(request.lang)) {
         if (result.hocr) {
