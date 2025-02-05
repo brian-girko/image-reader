@@ -34,11 +34,13 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
         color-scheme: light;
         z-index: 2147483647;
       `;
-      e.onload = () => e.contentWindow.postMessage({
-        method: 'proceed',
-        href,
-        request
-      }, '*');
+      e.onload = () => {
+        e.contentWindow.postMessage({
+          method: 'proceed',
+          href,
+          request
+        }, '*');
+      };
       e.src = chrome.runtime.getURL('/data/inject/sandbox.html');
       document.documentElement.append(e);
     }
@@ -46,7 +48,7 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
   args: [href, request]
 });
 
-chrome.action.onClicked.addListener(async tab => {
+const onClicked = async tab => {
   try {
     await chrome.scripting.insertCSS({
       target: {
@@ -73,6 +75,18 @@ chrome.action.onClicked.addListener(async tab => {
   catch (e) {
     console.error(e);
     notify(e);
+  }
+};
+chrome.action.onClicked.addListener(onClicked);
+chrome.commands.onCommand.addListener(async command => {
+  if (command === 'simulate_action') {
+    const tabs = await chrome.tabs.query({
+      active: true,
+      lastFocusedWindow: true
+    });
+    if (tabs.length) {
+      onClicked(tabs[0]);
+    }
   }
 });
 
