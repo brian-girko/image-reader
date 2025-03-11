@@ -36,11 +36,13 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "web_accessible_resources": [{
-    "resources": ["/data/engine/index.html", "/data/inject/sandbox.html"],
+    "resources": ["data/engine/index.html", "data/inject/sandbox.html"],
     "matches": ["<all_urls>"]
   }],
   "commands": {
-    "_execute_action": {},
+    "_execute_action": {
+      "description": "Execute Action"
+    },
     "simulate_action": {
       "description": "Simulate Action Click"
     }

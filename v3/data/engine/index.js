@@ -36,7 +36,7 @@ addEventListener('message', e => {
       if (request.lang.endsWith('_vert')) {
         params['tessedit_pageseg_mode'] = Tesseract.PSM.SINGLE_BLOCK_VERT_TEXT;
       }
-      if (['chi_sim', 'chi_tra', 'jpn', 'jpn_vert', 'kor', 'tha'].includes(request.lang)) {
+      if (['chi_sim', 'chi_tra', 'jpn', 'jpn_vert', 'tha'].includes(request.lang)) {
         params['preserve_interword_spaces'] = '1';
       }
       await worker.setParameters(params);
@@ -45,7 +45,7 @@ addEventListener('message', e => {
         hocr: true
       })).data;
 
-      if (['chi_sim', 'chi_tra', 'jpn', 'jpn_vert', 'kor', 'tha'].includes(request.lang)) {
+      if (['chi_sim', 'chi_tra', 'jpn', 'jpn_vert', 'tha'].includes(request.lang)) {
         if (result.hocr) {
           result.hocr = result.hocr.replace(/>\s+</g, '><');
         }
