@@ -74,6 +74,21 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
 });
 
 const onClicked = async tab => {
+  const target = {
+    tabId: tab.id
+  };
+  // try {
+  //   const image = await chrome.tabs.captureVisibleTab();
+  //   chrome.scripting.executeScript({
+  //     target,
+  //     func: src => {
+  //       self.magnify = true;
+  //       self.src = src;
+  //     },
+  //     args: [image]
+  //   });
+  // }
+  // catch (e) {}
   try {
     await chrome.scripting.insertCSS({
       target: {
@@ -91,9 +106,7 @@ const onClicked = async tab => {
       }
     });
     const r = await chrome.scripting.executeScript({
-      target: {
-        tabId: tab.id
-      },
+      target,
       files: ['/data/inject/inject.js']
     });
     // Safari

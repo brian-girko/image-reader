@@ -84,9 +84,21 @@ else {
     let guide1;
     let guide2;
     let guide3;
+    let image;
+    const vt = document.documentElement.scrollTop;
+    const ht = document.documentElement.scrollLeft;
+
     function position(left, top) {
       guide1.style.width = left + 'px';
       guide2.style.height = top + 'px';
+
+      if (self.magnify === true) {
+        const vtt = document.documentElement.scrollTop - vt;
+        const htt = document.documentElement.scrollLeft - ht;
+        const x = Math.max((left + htt) * devicePixelRatio - 50, 0);
+        const y = Math.max((top + vtt) * devicePixelRatio - 50, 0);
+        image.style['background-position'] = '-' + x + 'px -' + y + 'px';
+      }
     }
     function update(e) {
       position(e.clientX, e.clientY);
@@ -100,11 +112,18 @@ else {
         guide2.setAttribute('class', 'itrisearch-guide-2');
         guide3.setAttribute('class', 'itrisearch-guide-3');
         document.documentElement.append(guide3, guide1, guide2);
+        if (self.magnify) {
+          image = document.createElement('div');
+          image.style.background = `url(${self.src})`;
+          image.setAttribute('class', 'itrisearch-image');
+          document.documentElement.append(image);
+        }
         document.addEventListener('mousemove', update, false);
       },
       remove() {
         document.removeEventListener('mousemove', update, false);
-        for (const e of [...document.querySelectorAll('.itrisearch-guide-1, .itrisearch-guide-2, .itrisearch-guide-3')]) {
+        const es = document.querySelectorAll('[class^="itrisearch"]');
+        for (const e of es) {
           e.remove();
         }
         capture.remove();
