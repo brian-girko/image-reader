@@ -2,7 +2,7 @@ https://unpkg.com/browse/tesseract.js-core@6.0.0/tesseract-core-simd-lstm.wasm
 https://unpkg.com/browse/tesseract.js-core@6.0.0/tesseract-core-simd-lstm.wasm.js
 https://unpkg.com/browse/tesseract.js-core@6.0.0/tesseract-core-simd-lstm.js
 
-https://unpkg.com/tesseract.js@6.0.0/dist/worker.min.js
-https://unpkg.com/tesseract.js@6.0.0/dist/tesseract.min.js
-  -> replace "https://cdn.jsdelivr.net/npm/tesseract.js@v" with "" per review request
+https://unpkg.com/tesseract.js@6.0.1/dist/worker.min.js
+https://unpkg.com/tesseract.js@6.0.1/dist/tesseract.min.js
+  -> replace "https://cdn.jsdelivr.net/npm/tesseract.js@v" with "@v" per review request
 
