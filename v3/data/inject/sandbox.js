@@ -25,7 +25,8 @@ const service = {
       'frequently-used': ['eng', 'fra', 'deu', 'rus', 'ara'],
       'accuracy': '4.0.0',
       'close-after': -1,
-      'auto-clipboard': false
+      'auto-clipboard': false,
+      'magnify': false
     }, prefs => {
       const s = document.createElement('script');
       s.src = '/data/inject/response.js';

@@ -85,6 +85,7 @@ else {
     let guide2;
     let guide3;
     let image;
+    const size = 100;
     const vt = document.documentElement.scrollTop;
     const ht = document.documentElement.scrollLeft;
 
@@ -95,9 +96,12 @@ else {
       if (self.magnify === true) {
         const vtt = document.documentElement.scrollTop - vt;
         const htt = document.documentElement.scrollLeft - ht;
-        const x = Math.max((left + htt) * devicePixelRatio - 50, 0);
-        const y = Math.max((top + vtt) * devicePixelRatio - 50, 0);
+        const x = Math.max((left + htt) * devicePixelRatio - size / 2, 0);
+        const y = Math.max((top + vtt) * devicePixelRatio - size / 2, 0);
         image.style['background-position'] = '-' + x + 'px -' + y + 'px';
+        if (devicePixelRatio === 1) {
+          image.style.zoom = 1.5;
+        }
       }
     }
     function update(e) {
@@ -114,8 +118,9 @@ else {
         document.documentElement.append(guide3, guide1, guide2);
         if (self.magnify) {
           image = document.createElement('div');
-          image.style.background = `url(${self.src})`;
+          image.style['background-image'] = `url(${self.src})`;
           image.setAttribute('class', 'itrisearch-image');
+          image.style.setProperty('--size', size + 'px');
           document.documentElement.append(image);
         }
         document.addEventListener('mousemove', update, false);

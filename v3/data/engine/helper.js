@@ -42,7 +42,6 @@ if (typeof self.execute === 'undefined') {
       accuracy
     }, '*');
     document.documentElement.append(frame);
-
     signal.addEventListener('abort', () => frame.remove());
   });
 }

@@ -1,6 +1,7 @@
 // tests
 // https://www.youtube.com/
 // https://www.google.com/search?q=english+text&tbm=isch
+// https://regex101.com/
 
 {
   if (customElements.get('ocr-result') === undefined) {
@@ -314,6 +315,8 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                   </select>
                   <label for="auto-clipboard">Copy to clipboard</label>
                   <input type="checkbox" id="auto-clipboard">
+                  <label for="magnify">Show magnifier with inspector</label>
+                  <input type="checkbox" id="magnify">
                 </div>
               </div>
             </div>
@@ -358,6 +361,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         // settings
         this.shadowRoot.getElementById('close-after').value = this.prefs['close-after'];
         this.shadowRoot.getElementById('auto-clipboard').checked = this.prefs['auto-clipboard'];
+        this.shadowRoot.getElementById('magnify').checked = this.prefs['magnify'];
       }
       build(html) {
         const parser = new DOMParser();
@@ -564,6 +568,14 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           };
           this.configure(prefs, true);
           this.dispatchEvent(new Event('auto-clipboard-changed'));
+        };
+        // magnify
+        this.shadowRoot.getElementById('magnify').onchange = e => {
+          const prefs = {
+            'magnify': e.target.checked
+          };
+          this.configure(prefs, true);
+          this.dispatchEvent(new Event('magnify-changed'));
         };
         // apply commands on cross-origin (Firefox Only)
         this.addEventListener('command', () => {

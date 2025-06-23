@@ -77,18 +77,34 @@ const onClicked = async tab => {
   const target = {
     tabId: tab.id
   };
-  // try {
-  //   const image = await chrome.tabs.captureVisibleTab();
-  //   chrome.scripting.executeScript({
-  //     target,
-  //     func: src => {
-  //       self.magnify = true;
-  //       self.src = src;
-  //     },
-  //     args: [image]
-  //   });
-  // }
-  // catch (e) {}
+  const prefs = await chrome.storage.local.get({
+    magnify: false
+  });
+
+  // magnifier
+  try {
+    if (prefs.magnify) {
+      const image = await chrome.tabs.captureVisibleTab();
+      chrome.scripting.executeScript({
+        target,
+        func: src => {
+          self.magnify = true;
+          self.src = src;
+        },
+        args: [image]
+      });
+    }
+    else {
+      chrome.scripting.executeScript({
+        target,
+        func: src => {
+          self.magnify = false;
+        }
+      });
+    }
+  }
+  catch (e) {}
+
   try {
     await chrome.scripting.insertCSS({
       target: {

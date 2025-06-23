@@ -53,16 +53,19 @@
 }
 
 .itrisearch-image {
+  --size: 200px;
+
   z-index: 2147483641;
   position: fixed;
   top: anchor(--itrisearch-guide-2 bottom);
   left: anchor(--itrisearch-guide-1 right);
-  width: 100px;
-  height: 100px;
+  width: var(--size);
+  height: var(--size);
   border: solid 1px;
   box-shadow: 0 0 5px #7c7c7c;
   transform: translate(20px, 20px);
   overflow: auto;
+  background-repeat: no-repeat;
 }
 .itrisearch-image::before,
 .itrisearch-image::after {
@@ -77,12 +80,12 @@
   border-left: solid 1px red;
   top: anchor(--itrisearch-guide-2 bottom);
   left: anchor(--itrisearch-guide-1 right);
-  transform: translate(50px, 50px);
+  transform: translate(calc(var(--size) / 2), calc(var(--size) / 2));
 }
 .itrisearch-image::after {
   border-bottom: solid 1px red;
   border-right: solid 1px red;
   top: anchor(--itrisearch-guide-2 bottom);
   left: anchor(--itrisearch-guide-1 right);
-  transform: translate(30px, 30px);
+  transform: translate(calc(var(--size) / 2 - 20px), calc(var(--size) / 2 - 20px));
 }
