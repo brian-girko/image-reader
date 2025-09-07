@@ -74,7 +74,7 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
 });
 
 const internals = new Map();
-const isCloned = tab => internals.has(tab.id) && tab.url.includes(chrome.runtime.id);
+const isCloned = tab => internals.has(tab.id) && tab.url.startsWith(chrome.runtime.getURL('/'));
 
 const onClicked = async (tab, cloned = false) => {
   if (isCloned(tab)) {
@@ -137,7 +137,11 @@ const onClicked = async (tab, cloned = false) => {
     });
     // Safari
     if (r && r[0] && r[0].error) {
-      notify(r[0].error);
+      throw (Error(r[0].error));
+    }
+    // Firefox
+    if (r && r[0] === undefined) {
+      throw Error('INTERNAL_PAGE');
     }
   }
   catch (e) {

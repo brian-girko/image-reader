@@ -64,7 +64,6 @@ const service = {
           left: left * devicePixelRatio,
           top: top * devicePixelRatio
         };
-
         em.run();
       };
       document.body.append(s);
