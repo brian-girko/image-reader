@@ -33,7 +33,7 @@ const service = {
       s.onload = () => {
         const resize = () => chrome.runtime.sendMessage({
           method: 'resize',
-          height: `min(100vh, ${document.body.scrollHeight }px)`
+          height: `min(100vh, ${document.body.scrollHeight}px)`
         });
         resize();
 
@@ -46,6 +46,9 @@ const service = {
             resize();
           }
           else {
+            for (const or of document.querySelectorAll('ocr-result')) {
+              or.remove();
+            }
             chrome.runtime.sendMessage({
               method: 'remove-iframe'
             });

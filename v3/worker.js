@@ -73,7 +73,17 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
   args: [href, request]
 });
 
-const onClicked = async tab => {
+const internals = new Map();
+const isCloned = tab => internals.has(tab.id) && tab.url.includes(chrome.runtime.id);
+
+const onClicked = async (tab, cloned = false) => {
+  if (isCloned(tab)) {
+    chrome.tabs.sendMessage(tab.id, {
+      method: 'capture'
+    });
+    return;
+  }
+
   const target = {
     tabId: tab.id
   };
@@ -131,10 +141,25 @@ const onClicked = async tab => {
     }
   }
   catch (e) {
-    console.error(e);
-    notify(e);
+    console.warn(e);
+    // can we clone tab
+    try {
+      const v = await chrome.tabs.captureVisibleTab();
+      const args = new URLSearchParams();
+      args.set('title', 'Screenshot of "' + tab.title + '"');
+      const t = await chrome.tabs.create({
+        url: '/data/blank/index.html?' + args.toString(),
+        index: tab.index + 1,
+        openerTabId: tab.id
+      });
+      internals.set(t.id, v);
+    }
+    catch (e) {
+      notify(e);
+    }
   }
 };
+
 chrome.action.onClicked.addListener(onClicked);
 chrome.commands.onCommand.addListener(async command => {
   if (command === 'simulate_action') {
@@ -166,11 +191,20 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     if (!width || !height) {
       return notify('Please select a region. Either width or height of the captured area was zero');
     }
-    chrome.tabs.captureVisibleTab(sender.tab.windowId, {
-      format: 'png'
-    }, href => {
-      proceed(sender.tab.id, href, request);
-    });
+    if (isCloned(sender.tab)) {
+      chrome.tabs.sendMessage(sender.tab.id, {
+        method: 'proceed',
+        href: internals.get(sender.tab.id),
+        request
+      });
+    }
+    else {
+      chrome.tabs.captureVisibleTab(sender.tab.windowId, {
+        format: 'png'
+      }, href => {
+        proceed(sender.tab.id, href, request);
+      });
+    }
   }
   else if (request.method === 'open-link') {
     chrome.tabs.create({
@@ -192,31 +226,47 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     return true;
   }
   else if (request.method === 'resize') {
-    chrome.scripting.executeScript({
-      target: {
-        tabId: sender.tab.id
-      },
-      func: height => {
-        document.querySelector('iframe.gfrunj').style.height = height;
-      },
-      args: [request.height]
-    });
+    if (isCloned(sender.tab)) {
+      chrome.tabs.sendMessage(sender.tab.id, request);
+    }
+    else {
+      chrome.scripting.executeScript({
+        target: {
+          tabId: sender.tab.id
+        },
+        func: height => {
+          document.querySelector('iframe.gfrunj').style.height = height;
+        },
+        args: [request.height]
+      });
+    }
   }
   else if (request.method === 'remove-iframe') {
-    chrome.scripting.executeScript({
-      target: {
-        tabId: sender.tab.id
-      },
-      func: () => {
-        document.querySelector('iframe.gfrunj').remove();
-      }
-    });
+    if (isCloned(sender.tab)) {
+      chrome.tabs.sendMessage(sender.tab.id, {
+        method: 'remove-iframe'
+      });
+    }
+    else {
+      chrome.scripting.executeScript({
+        target: {
+          tabId: sender.tab.id
+        },
+        func: () => {
+          document.querySelector('iframe.gfrunj').remove();
+        }
+      });
+    }
   }
   else if (request.method === 'clipboard-permission') {
     chrome.permissions.request({
       permissions: ['clipboardWrite']
     }, response);
     return true;
+  }
+  else if (request.method === 'get-image') {
+    response(internals.get(sender.tab.id));
+    // internals.delete(sender.tab.id);
   }
 });
 
