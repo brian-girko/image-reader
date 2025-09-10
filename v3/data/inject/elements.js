@@ -312,6 +312,8 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                     <option value="30">30 seconds</option>
                     <option value="60">1 minute</option>
                     <option value="300">5 minutes</option>
+                    <hr/>
+                    <option value="clipboard">Copy to Clipboard</option>
                   </select>
                   <label for="auto-clipboard">Copy to clipboard</label>
                   <input type="checkbox" id="auto-clipboard">
@@ -372,10 +374,21 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           this.shadowRoot.getElementById('result').append(child);
         }
 
-        if (this.prefs['close-after'] > 0) {
-          setTimeout(() => {
-            this.shadowRoot.getElementById('close').click();
-          }, this.prefs['close-after'] * 1000);
+        if (this['close-after'] !== 'clipboard') {
+          if (this.prefs['close-after'] > 0) {
+            let counter = this.prefs['close-after'];
+            const tick = () => {
+              this.shadowRoot.getElementById('close').value = `Close (${counter})`;
+              counter -= 1;
+              if (counter < 1) {
+                this.shadowRoot.getElementById('close').click();
+              }
+              else {
+                setTimeout(tick, 1000);
+              }
+            };
+            tick();
+          }
         }
       }
       message(value) {
@@ -433,6 +446,10 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             input.select();
             document.execCommand('copy');
             input.remove();
+          }
+          console.log(this.shadowRoot.getElementById('close-after').value);
+          if (this.shadowRoot.getElementById('close-after').value === 'clipboard') {
+            this.shadowRoot.getElementById('close').click();
           }
           this.toast('copy', {
             new: 'Done',
@@ -556,7 +573,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         // close-after
         this.shadowRoot.getElementById('close-after').onchange = e => {
           const prefs = {
-            'close-after': Number(e.target.value)
+            'close-after': e.target.value === 'clipboard' ? 'clipboard' : Number(e.target.value)
           };
           this.configure(prefs, true);
           this.dispatchEvent(new Event('close-after-changed'));
