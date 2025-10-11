@@ -47,6 +47,7 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
     }
     else {
       const e = document.createElement('iframe');
+      e.setAttribute('allow', 'clipboard-write');
       e.classList.add('gfrunj');
       e.style = `
         position: fixed;

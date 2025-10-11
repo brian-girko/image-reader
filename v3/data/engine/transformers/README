@@ -1,0 +1,9 @@
+https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5
+https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/ort-wasm-simd-threaded.jsep.mjs
+https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/dist/ort-wasm-simd-threaded.jsep.wasm
+
+https://huggingface.co/spaces/ibm-granite/granite-docling-258M-WebGPU/raw/main/parser.js
+
+
+https://cdn.jsdelivr.net/npm/katex@0.16.23/dist/katex.mjs
+https://cdn.jsdelivr.net/npm/katex@0.16.23/dist/contrib/auto-render.mjs

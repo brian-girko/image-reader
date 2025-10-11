@@ -173,6 +173,95 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               grid-gap: var(--gap);
               justify-content: end;
             }
+            /* from https://ibm-granite-granite-docling-258m-webgpu.static.hf.space/index.html */
+            h1, h2, h3, h4, h5, h6 {
+              color: #333;
+              margin-top: 0.5em;
+              margin-bottom: 0.5em;
+            }
+            h1 {
+              font-size: 2em;
+              border-bottom: 1px solid #eee;
+              padding-bottom: 0.3em;
+            }
+            table {
+              border-collapse: collapse;
+              margin: 1em 0;
+              width: 100%;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            figure {
+              margin: 1.5em 0;
+              text-align: center;
+            }
+            figcaption {
+              color: #666;
+              font-style: italic;
+              margin-top: 0.5em;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+            pre {
+              background-color: #f6f8fa;
+              border-radius: 3px;
+              padding: 1em;
+              overflow: auto;
+            }
+            code {
+              font-family: monospace;
+              background-color: #f6f8fa;
+              padding: 0.2em 0.4em;
+              border-radius: 3px;
+            }
+            pre code {
+              background-color: transparent;
+              padding: 0;
+            }
+            .formula {
+              text-align: center;
+              padding: 0.5em;
+              margin: 1em 0;
+            }
+            .formula:not(:has(.katex)) {
+              color: transparent;
+            }
+            .page-break {
+              page-break-after: always;
+              border-top: 1px dashed #ccc;
+              margin: 2em 0;
+            }
+            .key-value-region {
+              background-color: #f9f9f9;
+              padding: 1em;
+              border-radius: 4px;
+              margin: 1em 0;
+            }
+            .key-value-region dt {
+              font-weight: bold;
+            }
+            .key-value-region dd {
+              margin-left: 1em;
+              margin-bottom: 0.5em;
+            }
+            .form-container {
+              border: 1px solid #ddd;
+              padding: 1em;
+              border-radius: 4px;
+              margin: 1em 0;
+            }
+            .form-item {
+              margin-bottom: 0.5em;
+            }
           </style>
 
           <div id="body">
@@ -293,10 +382,12 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               </select>
               <span class="sep"></span>
               <select id="accuracy">
-                <option value='3.02'>Low Accuracy</option>
-                <option value='4.0.0_fast'>Moderate Accuracy</option>
-                <option value='4.0.0'>Better Accuracy</option>
-                <option value='4.0.0_best'>Best Accuracy</option>
+                <option value='3.02'>Tesseract Low Accuracy</option>
+                <option value='4.0.0_fast'>Tesseract Moderate Accuracy</option>
+                <option value='4.0.0'>Tesseract Better Accuracy</option>
+                <option value='4.0.0_best'>Tesseract Best Accuracy</option>
+                <hr/>
+                <option value='onnx-community/granite-docling-258M-ONNX'>IBM Granite (experimental)</option>
               </select>
               <button id="settings" popovertarget="settings-div">
                 <svg viewBox="0 0 48 48" width="18" height="18">
@@ -365,13 +456,25 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         this.shadowRoot.getElementById('auto-clipboard').checked = this.prefs['auto-clipboard'];
         this.shadowRoot.getElementById('magnify').checked = this.prefs['magnify'];
       }
-      build(html) {
+      build(o) {
         const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+        const doc = parser.parseFromString(o.hocr || o.html, 'text/html');
         this.clear();
 
         for (const child of [...doc.body.childNodes]) {
           this.shadowRoot.getElementById('result').append(child);
+        }
+
+        // do we have math elements
+        const mathElements = this.shadowRoot.querySelectorAll('.formula');
+        if (mathElements.length) {
+          import('/data/engine/katex/katex.mjs').then(katex => {
+            for (const element of mathElements) {
+              element.innerHTML = katex.renderToString(element.textContent, {
+                output: 'mathml'
+              });
+            }
+          });
         }
 
         if (this['close-after'] !== 'clipboard') {
@@ -413,7 +516,10 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         this.shadowRoot.getElementById('result').setAttribute('contenteditable', true);
       }
       get result() {
-        return this.shadowRoot.getElementById('result').innerText;
+        return {
+          text: this.shadowRoot.getElementById('result').innerText,
+          html: this.shadowRoot.getElementById('result').innerHTML,
+        };
       }
       language(value) {
         this.dataset.language = value;
@@ -433,13 +539,22 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
       connectedCallback() {
         // copy
         this.shadowRoot.getElementById('copy').onclick = async () => {
+          const {text, html} = this.result;
           try {
-            await navigator.clipboard.writeText(this.result);
+            const item = new ClipboardItem({
+              'text/plain': new Blob([text], {
+                type: 'text/plain'
+              }),
+              'text/html': new Blob([html], {
+                type: 'text/html'
+              })
+            });
+            await navigator.clipboard.write([item]);
           }
           catch (e) {
             // console.info('Copy failed. Trying alternative method', e);
             const input = document.createElement('textarea');
-            input.value = this.result;
+            input.value = text;
             input.style.position = 'absolute';
             input.style.left = '-9999px';
             document.body.append(input);
@@ -447,7 +562,6 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             document.execCommand('copy');
             input.remove();
           }
-          console.log(this.shadowRoot.getElementById('close-after').value);
           if (this.shadowRoot.getElementById('close-after').value === 'clipboard') {
             this.shadowRoot.getElementById('close').click();
           }
@@ -474,7 +588,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             this.configure(prefs, true);
           }
 
-          const value = this.result.trim();
+          const value = this.result.text.trim();
           const options = {
             method: this.prefs['post-method'],
             mode: 'no-cors'

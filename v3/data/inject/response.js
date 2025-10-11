@@ -4,6 +4,7 @@
 {
   const em = document.createElement('ocr-result');
   em.dataset.page = chrome.runtime.getManifest().homepage_url + '#faq8';
+  em.controllers = new Set();
   document.body.append(em);
   try {
     em.scrollIntoViewIfNeeded();
@@ -13,20 +14,38 @@
   const command = em.command = (name, ...args) => em[name](...args);
 
   const ocr = (lang, src) => {
+    // if accuracy changed, kill old engines
+    if (em.controllers.accuracy) {
+      if (em.controllers.accuracy !== em.dataset.accuracy) {
+        for (const controller of em.controllers) {
+          controller.abort();
+        }
+        em.controllers.clear();
+        command('progress', 0);
+        command('clear');
+      }
+    }
+    em.controllers.accuracy = em.dataset.accuracy;
+
     const report = report => {
       command('message', report.status);
 
       if (report.status === 'recognizing text') {
         command('progress', report.progress);
       }
+      else if (report.status.startsWith('Streaming')) {
+        command('progress', report.progress);
+      }
       else if (
-        report.status === 'loading language traineddata' ||
-        report.status === 'loaded language traineddata'
+        report.status.startsWith('Loading') ||
+        report.status.startsWith('loading') ||
+        report.status.startsWith('loaded')
       ) {
         command('progress', report.progress, 'lang');
       }
     };
     const controller = new AbortController();
+    em.controllers.add(controller);
     em.addEventListener('closed', () => controller.abort());
     return self.execute({
       lang,
@@ -127,13 +146,12 @@
       }
 
       if (o.text.trim() === '') {
-        command(
-          'build',
-          '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>'
-        );
+        command('build', {
+          hocr: '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>'
+        });
       }
       else {
-        command('build', o.hocr);
+        command('build', o);
         command('enable');
       }
     }
