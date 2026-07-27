@@ -165,6 +165,20 @@ const onClicked = async (tab, cloned = false) => {
   }
 };
 
+const standalone = async () => {
+  const args = new URLSearchParams();
+  args.set('mode', 'standalone');
+  args.set('title', 'Load Images :: OCR - Image Reader');
+
+  const win = await chrome.windows.create({
+    url: '/data/blank/index.html?' + args.toString(),
+    width: 600,
+    height: 600,
+    type: 'popup'
+  });
+  internals.set(win.tabs[0].id, '');
+};
+
 chrome.action.onClicked.addListener(onClicked);
 chrome.commands.onCommand.addListener(async command => {
   if (command === 'simulate_action') {
@@ -175,6 +189,9 @@ chrome.commands.onCommand.addListener(async command => {
     if (tabs.length) {
       onClicked(tabs[0]);
     }
+  }
+  else if (command === 'standalone') {
+    standalone();
   }
 });
 

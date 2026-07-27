@@ -100,6 +100,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               background-color: var(--bg-result);
               margin: 10px 0;
               overflow: auto;
+              scrollbar-width: thin;
               flex: 1;
               padding: var(--gap);
             }
@@ -518,7 +519,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
       get result() {
         return {
           text: this.shadowRoot.getElementById('result').innerText,
-          html: this.shadowRoot.getElementById('result').innerHTML,
+          html: this.shadowRoot.getElementById('result').innerHTML
         };
       }
       language(value) {

@@ -8,6 +8,7 @@ div {
   background-repeat: no-repeat;
   width: 100vw;
   height: 100vh;
+  background-color: #f6ffef;
 }
 iframe {
   position: fixed;
@@ -23,12 +24,20 @@ iframe {
 iframe.hidden {
   display: none;
 }
-p {
+#toast {
   text-align: center;
   padding: 10px;
   background-color: #dbffbd;
   margin: 0;
   position: absolute;
   bottom: 0;
-  width: calc(max(100px , 100vw - min(600px, calc(100vw - 3rem))));
+  width: calc(max(300px , 100vw - min(600px, calc(100vw - 3rem))));
+}
+body.standalone {
+  #toast {
+    bottom: unset;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%);
+  }
 }

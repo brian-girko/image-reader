@@ -45,6 +45,9 @@
     },
     "simulate_action": {
       "description": "Simulate Action Click"
+    },
+    "standalone": {
+      "description": "Open standalone view to OCR local images"
     }
   },
   "browser_specific_settings": {

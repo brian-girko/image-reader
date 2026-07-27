@@ -1,14 +1,83 @@
 /* global guide, capture, monitor */
 
 const args = new URLSearchParams(location.search);
-
-document.title = args.get('title');
 const f = document.querySelector('iframe');
 
-chrome.runtime.sendMessage({
-  method: 'get-image'
-}).then(r => {
-  document.querySelector('div').style['background-image'] = `url(${r})`;
+document.title = args.get('title');
+
+if (args.get('mode') === 'standalone') {
+  document.getElementById('toast').textContent = `Double-click or drag and drop local images into this view to perform OCR`;
+  document.body.classList.add('standalone');
+}
+else {
+  document.getElementById('toast').textContent = `This is a read-only copy of the viewport.
+The original tab was internal, so the extension couldn't access it. Use this copy for OCR, then close it to return to the original tab.`
+
+  // install selector
+  const s = document.createElement('script');
+  s.src = '/data/inject/inject.js';
+  document.body.append(s);
+
+  // ask for image
+  chrome.runtime.sendMessage({
+    method: 'get-image'
+  }).then(r => {
+    document.querySelector('div').style['background-image'] = `url(${r})`;
+  });
+}
+
+const handleImages = files => {
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) {
+      console.info('Not an image', file);
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      f.classList.remove('hidden');
+      f.contentWindow.postMessage({
+        method: 'proceed',
+        href: reader.result,
+        request: {
+          method: 'proceed',
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0
+        }
+      }, '*');
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+document.addEventListener('dblclick', () => {
+  const input = document.createElement('input');
+
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.style.display = 'none';
+
+  input.onchange = () => {
+    const files = [...input.files];
+    handleImages(files);
+
+    input.remove();
+  };
+
+  document.body.appendChild(input);
+  input.click();
+});
+
+document.addEventListener('dragover', e => {
+  e.preventDefault();
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+
+  const files = e.dataTransfer.files;
+  handleImages(files);
 });
 
 chrome.runtime.onMessage.addListener((request, sender) => {

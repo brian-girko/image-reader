@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-const service = {
+const service = self.service = {
   busy: false,
   jobs: [],
   next() {
@@ -16,6 +16,8 @@ const service = {
     }
   },
   run({href, request}) {
+    console.log(href, request);
+
     service.busy = true;
     chrome.storage.local.get({
       'post-method': 'POST',
