@@ -458,6 +458,10 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         this.shadowRoot.getElementById('magnify').checked = this.prefs['magnify'];
       }
       build(o) {
+        this.dispatchEvent(new CustomEvent('result', {
+          detail: o
+        }));
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(o.hocr || o.html, 'text/html');
         this.clear();

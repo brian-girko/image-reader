@@ -15,8 +15,8 @@ const service = self.service = {
       service.next();
     }
   },
-  run({href, request}) {
-    console.log(href, request);
+  run(o) {
+    const {href, report, request} = o;
 
     service.busy = true;
     chrome.storage.local.get({
@@ -42,6 +42,15 @@ const service = self.service = {
         const em = document.querySelector('ocr-result:last-of-type');
         em.command('configure', prefs);
         em.command('prepare');
+        // report to top window
+        if (report) {
+          em.addEventListener('result', e => {
+            parent.postMessage({
+              cmd: 'result',
+              value: e.detail
+            });
+          });
+        }
         em.addEventListener('mode-changed', resize);
         em.addEventListener('closed', e => {
           if (document.querySelector('ocr-result') && !e.shiftKey) {

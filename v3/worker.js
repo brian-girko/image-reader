@@ -165,10 +165,23 @@ const onClicked = async (tab, cloned = false) => {
   }
 };
 
-const standalone = async () => {
+const standalone = async ({
+  image = '',
+  proceed = false,
+  selector = false,
+  agent = false,
+  title = '',
+  message = ''
+}) => {
   const args = new URLSearchParams();
   args.set('mode', 'standalone');
-  args.set('title', 'Load Images :: OCR - Image Reader');
+  args.set('proceed', proceed);
+  args.set('selector', selector);
+  args.set('agent', agent);
+  args.set('title', title || 'OCR for Local Images');
+  if (message) {
+    args.set('message', message);
+  }
 
   const win = await chrome.windows.create({
     url: '/data/blank/index.html?' + args.toString(),
@@ -176,7 +189,9 @@ const standalone = async () => {
     height: 600,
     type: 'popup'
   });
-  internals.set(win.tabs[0].id, '');
+  internals.set(win.tabs[0].id, image);
+
+  return win;
 };
 
 chrome.action.onClicked.addListener(onClicked);
@@ -191,7 +206,7 @@ chrome.commands.onCommand.addListener(async command => {
     }
   }
   else if (command === 'standalone') {
-    standalone();
+    standalone({});
   }
 });
 
@@ -302,6 +317,48 @@ chrome.runtime.onInstalled.addListener(() => {
     });
   }
   catch (e) {}
+});
+
+/* external access */
+chrome.runtime.onConnectExternal.addListener(eport => {
+  const wins = new Set();
+  eport.onDisconnect.addListener(() => {
+    for (const win of wins) {
+      chrome.windows.remove(win.id).catch(() => {});
+    }
+  });
+  eport.onMessage.addListener(async request => {
+    if (request.cmd === 'request-ocr') {
+      request.agent = true;
+      const observe = iport => {
+        iport.onMessage.addListener(r => eport.postMessage(r));
+        iport.onDisconnect.addListener(() => {
+          const e = chrome.runtime.lastError;
+          eport.postMessage({
+            cmd: 'disconnected',
+            value: e ? e.message : ''
+          });
+        });
+      };
+      chrome.runtime.onConnect.addListener(observe);
+      const win = await standalone(request);
+      wins.add(win);
+      eport.postMessage({
+        cmd: 'report',
+        value: 'OCR window is opened'
+      });
+      setTimeout(() => chrome.runtime.onConnect.removeListener(observe), 5000);
+    }
+    else if (request.cmd === 'close') {
+      for (const win of wins) {
+        chrome.windows.remove(win.id).catch(() => {});
+      }
+      eport.postMessage({
+        cmd: 'report',
+        value: wins.size ? 'OCR window is closed' : 'no OCR window to close'
+      });
+    }
+  });
 });
 
 /* FAQs & Feedback */

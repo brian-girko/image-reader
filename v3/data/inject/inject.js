@@ -157,9 +157,11 @@ else {
     };
   })();
 
-  guide.install();
-  capture.install();
-  monitor.install();
+  if (self.standby !== true) {
+    guide.install();
+    capture.install();
+    monitor.install();
+  }
 }
 
 

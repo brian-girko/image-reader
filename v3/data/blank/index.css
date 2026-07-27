@@ -4,7 +4,6 @@ body {
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 div {
-  background-size: cover;
   background-repeat: no-repeat;
   width: 100vw;
   height: 100vh;
@@ -33,11 +32,12 @@ iframe.hidden {
   bottom: 0;
   width: calc(max(300px , 100vw - min(600px, calc(100vw - 3rem))));
 }
-body.standalone {
-  #toast {
-    bottom: unset;
-    top: 25%;
-    left: 50%;
-    transform: translate(-50%);
-  }
+#toast:empty {
+  display: none;
+}
+body.standalone #toast {
+  bottom: unset;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%);
 }
