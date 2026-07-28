@@ -1,6 +1,6 @@
-https://unpkg.com/browse/tesseract.js-core@6.1.2/tesseract-core-simd-lstm.wasm
-https://unpkg.com/browse/tesseract.js-core@6.1.2/tesseract-core-simd-lstm.wasm.js
-https://unpkg.com/browse/tesseract.js-core@6.1.2/tesseract-core-simd-lstm.js
+https://unpkg.com/browse/tesseract.js-core@7.0.0/tesseract-core-simd-lstm.wasm
+https://unpkg.com/browse/tesseract.js-core@7.0.0/tesseract-core-simd-lstm.wasm.js
+https://unpkg.com/browse/tesseract.js-core@7.0.0/tesseract-core-simd-lstm.js
 
 https://unpkg.com/tesseract.js@7.0.0/dist/worker.min.js
 https://unpkg.com/tesseract.js@7.0.0/dist/tesseract.min.js
