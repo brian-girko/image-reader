@@ -319,18 +319,38 @@ chrome.runtime.onInstalled.addListener(() => {
   catch (e) {}
 });
 
+/* cross-extension MCP support */
+chrome.runtime.onMessageExternal.addListener((request, sender, response) => {
+  if (request.cmd === 'mcp.json') {
+    fetch('mcp/mcp.json').then(r => r.json()).then(response);
+    return true;
+  }
+  else if (request.cmd === 'mcp.output') {
+    fetch('mcp/mcp.output').then(r => r.text()).then(response);
+    return true;
+  }
+  else {
+    response({
+      error: 'unknown-request'
+    });
+  }
+});
+
 /* external access */
+const wins = new Set();
 chrome.runtime.onConnectExternal.addListener(eport => {
-  const wins = new Set();
+  let win;
   eport.onDisconnect.addListener(() => {
-    for (const win of wins) {
-      chrome.windows.remove(win.id).catch(() => {});
-    }
+    chrome.windows.remove(win.id).catch(() => {});
   });
   eport.onMessage.addListener(async request => {
+    console.log(request);
+
     if (request.cmd === 'request-ocr') {
-      request.agent = true;
+      request.agent = true; // to let the popup window know it needs to connect to this port
       const observe = iport => {
+        chrome.runtime.onConnect.removeListener(observe);
+
         iport.onMessage.addListener(r => eport.postMessage(r));
         iport.onDisconnect.addListener(() => {
           const e = chrome.runtime.lastError;
@@ -341,12 +361,9 @@ chrome.runtime.onConnectExternal.addListener(eport => {
         });
       };
       chrome.runtime.onConnect.addListener(observe);
-      const win = await standalone(request);
+      win = await standalone(request);
       wins.add(win);
-      eport.postMessage({
-        cmd: 'report',
-        value: 'OCR window is opened'
-      });
+
       setTimeout(() => chrome.runtime.onConnect.removeListener(observe), 5000);
     }
     else if (request.cmd === 'close') {
@@ -356,6 +373,11 @@ chrome.runtime.onConnectExternal.addListener(eport => {
       eport.postMessage({
         cmd: 'report',
         value: wins.size ? 'OCR window is closed' : 'no OCR window to close'
+      });
+    }
+    else {
+      eport.postMessage({
+        error: 'this command is unknown'
       });
     }
   });

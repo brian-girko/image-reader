@@ -1,0 +1,187 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [
+      {
+        "name": "ocr_request",
+        "description": "Perform OCR on images using the OCR extension. This is an ASYNCHRONOUS operation that opens a popup window. The agent MUST keep the connection open and wait for user interaction or OCR completion.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cmd": {
+              "type": "string",
+              "enum": ["request-ocr"],
+              "description": "Must be 'request-ocr'"
+            },
+            "image": {
+              "type": "string",
+              "description": "Data URI of the image to process. If not provided or empty, user must select an image from local disk. Required when using 'proceed: true'.",
+              "optional": true
+            },
+            "proceed": {
+              "type": "boolean",
+              "description": "If true, OCR runs immediately on the provided image. Requires 'image' to be a valid data URI. Use this for fully automated OCR without user interaction.",
+              "optional": true
+            },
+            "selector": {
+              "type": "boolean",
+              "description": "If true, enables a mouse selection tool to crop the image before OCR. Do NOT use with 'proceed: true'. When selector is true, the user must interact with the image to select a region. This REQUIRES an image to be provided in the 'image' field.",
+              "optional": true
+            },
+            "title": {
+              "type": "string",
+              "description": "Custom title for the OCR popup window.",
+              "optional": true
+            },
+            "message": {
+              "type": "string",
+              "description": "Custom message displayed inside the OCR window. Default: 'Double-click or drag and drop local images into this view to perform OCR'. Pass a blank string (' ') to hide the message.",
+              "optional": true
+            }
+          },
+          "required": ["cmd"]
+        },
+        "outputSchema": {
+          "type": "array",
+          "description": "Array containing the OCR result, status messages, or errors",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "description": "Report message when OCR window opens - WAIT for further messages, do not cancel",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "enum": ["report"],
+                    "description": "Command identifier for report"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Status message, e.g., 'OCR window is opened'"
+                  }
+                },
+                "required": ["cmd", "value"]
+              },
+              {
+                "type": "object",
+                "description": "OCR result containing extracted text and metadata",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "enum": ["result"],
+                    "description": "Command identifier for OCR result"
+                  },
+                  "value": {
+                    "type": "object",
+                    "description": "Complete OCR result data",
+                    "properties": {
+                      "blocks": {"type": "array", "description": "Text blocks detected in the image"},
+                      "box": {"type": "array", "description": "Bounding boxes for detected text"},
+                      "confidence": {"type": "number", "description": "Confidence score of the OCR"},
+                      "debug": {"type": "object", "description": "Debug information"},
+                      "hocr": {"type": "string", "description": "hOCR format output"},
+                      "imageBinary": {"type": "string", "description": "Binary image data"},
+                      "imageColor": {"type": "string", "description": "Color image data"},
+                      "imageGrey": {"type": "string", "description": "Greyscale image data"},
+                      "layoutBlocks": {"type": "array", "description": "Layout blocks detected"},
+                      "oem": {"type": "number", "description": "OCR Engine Mode used"},
+                      "osd": {"type": "object", "description": "Orientation and script detection data"},
+                      "pdf": {"type": "string", "description": "PDF output"},
+                      "psm": {"type": "number", "description": "Page Segmentation Mode used"},
+                      "rotateRadians": {"type": "number", "description": "Rotation angle in radians"},
+                      "text": {"type": "string", "description": "Extracted text content"},
+                      "tsv": {"type": "string", "description": "TSV format output"},
+                      "unlv": {"type": "string", "description": "UNLV format output"},
+                      "version": {"type": "string", "description": "Tesseract version used"}
+                    },
+                    "required": ["text"]
+                  }
+                },
+                "required": ["cmd", "value"]
+              },
+              {
+                "type": "object",
+                "description": "Error response if OCR fails",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "description": "Human-readable error message describing what went wrong"
+                  }
+                },
+                "required": ["error"]
+              },
+              {
+                "type": "object",
+                "description": "Disconnect message when OCR window is closed by user",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "enum": ["disconnected"],
+                    "description": "Command identifier for disconnect"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Empty string or disconnect reason"
+                  }
+                },
+                "required": ["cmd", "value"]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "ocr_close",
+        "description": "Close the OCR window programmatically after receiving result or error",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "cmd": {
+              "type": "string",
+              "enum": ["close"],
+              "description": "Must be 'close'"
+            }
+          },
+          "required": ["cmd"]
+        },
+        "outputSchema": {
+          "type": "array",
+          "description": "Confirmation or error message",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "description": "Confirmation of close command",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "enum": ["close"],
+                    "description": "Confirmation of close command"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Status message"
+                  }
+                },
+                "required": ["cmd"]
+              },
+              {
+                "type": "object",
+                "description": "Error response if close fails",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "description": "Human-readable error message describing what went wrong"
+                  }
+                },
+                "required": ["error"]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

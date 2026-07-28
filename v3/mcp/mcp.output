@@ -1,0 +1,37 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "cmd": "report",
+      "value": "OCR window is opened"
+    },
+    {
+      "cmd": "result",
+      "value": {
+        "text": "Example\n",
+        "hocr": "<div class='ocr_page' id='page_1' title='image \"unknown\"; bbox 0 0 500 100; ppageno 0; scan_res 70 70'>\n <div class='ocr_carea' id='block_1_1' title=\"bbox 10 8 222 63\">\n  <p class='ocr_par' id='par_1_1' lang='eng' title=\"bbox 10 8 222 63\">\n   <span class='ocr_line' id='line_1_1' title=\"bbox 10 8 222 63; baseline 0.005 -13; x_size 55; x_descenders 13; x_ascenders 14\">\n    <span class='ocrx_word' id='word_1_1' title='bbox 10 8 222 63; x_wconf 96'>Example</span>\n   </span>\n  </p>\n </div>\n</div>\n",
+        "tsv": null,
+        "box": null,
+        "unlv": null,
+        "osd": null,
+        "pdf": null,
+        "imageColor": null,
+        "imageGrey": null,
+        "imageBinary": null,
+        "confidence": 96,
+        "blocks": null,
+        "layoutBlocks": null,
+        "psm": "SINGLE_BLOCK",
+        "oem": "LSTM_ONLY",
+        "version": "5.1.0-284-g9c08",
+        "debug": null,
+        "rotateRadians": 0
+      }
+    },
+    {
+      "cmd": "disconnected",
+      "value": ""
+    }
+  ]
+}
