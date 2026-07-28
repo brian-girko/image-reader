@@ -108,6 +108,7 @@ const onClicked = async (tab, cloned = false) => {
     else {
       chrome.scripting.executeScript({
         target,
+        injectImmediately: true,
         func: src => {
           self.magnify = false;
         }
@@ -134,6 +135,7 @@ const onClicked = async (tab, cloned = false) => {
     });
     const r = await chrome.scripting.executeScript({
       target,
+      injectImmediately: true,
       files: ['/data/inject/inject.js']
     });
     // Safari
