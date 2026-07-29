@@ -5,6 +5,10 @@ This extension adds a toolbar button to your browser to perform OCR. When this a
 ### YouTube Preview
 [![Preview](https://img.youtube.com/vi/XnpgZPnn9bk/0.jpg)](https://www.youtube.com/watch?v=XnpgZPnn9bk)
 
+### MCP Server
+This extension can be used with coding agents such as OpenCode. Read [FAQs page](https://webextension.org/listing/ocr.html) for more info. Also check the [mcp.json](/v3/mcp/mcp.json) (LLM tool definition) file which defines available tools for an agent, using JSON-RPC 2.0 as the envelope and JSON Schema for input/output.
+
+
 ### Links
   * FAQs Page: https://webextension.org/listing/ocr.html
   * Review:
