@@ -81,24 +81,38 @@ async function loadModel() {
     processor = await AutoProcessor.from_pretrained('onnx-community/granite-docling-258M-ONNX');
   }
   if (!model) {
-    model = await AutoModelForVision2Seq.from_pretrained('onnx-community/granite-docling-258M-ONNX', {
-      dtype: {
-        embed_tokens: 'fp16',
-        vision_encoder: 'fp32',
-        decoder_model_merged: 'fp32'
-      },
-      device: 'webgpu'
-    });
+    try {
+      model = await AutoModelForVision2Seq.from_pretrained('onnx-community/granite-docling-258M-ONNX', {
+        dtype: {
+          embed_tokens: 'fp16',
+          vision_encoder: 'fp32',
+          decoder_model_merged: 'fp32'
+        },
+        device: 'webgpu'
+      });
+      return 'webgpu';
+    }
+    catch (e) {
+      model = await AutoModelForVision2Seq.from_pretrained('onnx-community/granite-docling-258M-ONNX', {
+        dtype: {
+          embed_tokens: 'fp32', // WASM CPU inference often works better with fp32
+          vision_encoder: 'fp32',
+          decoder_model_merged: 'fp32'
+        },
+        device: 'wasm'
+      });
+
+      return 'wasm';
+    }
   }
 }
 self.onmessage = async event => {
   const {type, src} = event.data;
 
-
   if (type === 'PROCESS_FILE') {
     try {
       // Load model lazily on first request
-      await loadModel();
+      const device = await loadModel();
 
       self.postMessage({
         type: 'REPORT',
@@ -121,9 +135,11 @@ self.onmessage = async event => {
       const text = processor.apply_chat_template(messages, {add_generation_prompt: true});
       const inputs = await processor(text, [image], {do_image_splitting: true});
 
+      const status = device === 'webgpu' ? 'Processing...' :
+        `"WebGPU" is not accessible. Using the "WASM" fallback instead. Expect reduced performance. Processing...`;
       self.postMessage({
         type: 'REPORT',
-        status: 'Processing...'
+        status
       });
 
       let content = '';
