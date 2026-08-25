@@ -20,7 +20,7 @@
   "homepage_url": "https://webextension.org/listing/ocr.html",
   "background": {
     "service_worker": "worker.js",
-    "scripts": ["worker.js"]
+    "scripts": ["/data/popup/shared.js", "worker.js"]
   },
   "icons": {
     "16": "/data/icons/16.png",
@@ -31,7 +31,14 @@
     "256": "/data/icons/256.png",
     "512": "/data/icons/512.png"
   },
-  "action": {},
+  "action": {
+    "default_popup": "/data/popup/index.html",
+    "default_title": "OCR - Image Reader"
+  },
+  "options_ui": {
+    "page": "/data/options/index.html",
+    "open_in_tab": true
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; worker-src 'self';"
   },
@@ -48,6 +55,12 @@
     },
     "standalone": {
       "description": "Open standalone view to OCR local images"
+    },
+    "draw-region": {
+      "description": "Draw a region to save and OCR"
+    },
+    "capture-region": {
+      "description": "OCR the most recent saved region for this site"
     }
   },
   "browser_specific_settings": {

@@ -1,0 +1,161 @@
+:root {
+  color-scheme: light dark;
+  --fg: #1f1f1f;
+  --bg: #fff;
+  --muted: #767676;
+  --line: #e5e5e5;
+  --accent: #4c66d6;
+  --accent-fg: #fff;
+  --danger: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #ececec;
+    --bg: #202124;
+    --muted: #9aa0a6;
+    --line: #3c4043;
+    --accent: #8ab4f8;
+    --accent-fg: #202124;
+    --danger: #f28b82;
+  }
+}
+
+body {
+  width: 340px;
+  margin: 0;
+  padding: 12px;
+  font: 13px/1.45 system-ui, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+header img {
+  width: 20px;
+  height: 20px;
+}
+h1 {
+  font-size: 14px;
+  margin: 0;
+}
+h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 14px 0 6px;
+}
+
+#actions {
+  display: flex;
+  gap: 6px;
+}
+#actions button {
+  flex: 1;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+#draw {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: none;
+}
+#open-options {
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#open-options,
+#quick {
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+#draw:hover {
+  filter: brightness(1.1);
+}
+#open-options:hover,
+#quick:hover {
+  background: var(--line);
+}
+
+#empty {
+  color: var(--muted);
+  margin: 4px 0;
+}
+
+#list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+#list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.item-main {
+  flex: 1;
+  min-width: 0;
+}
+.label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+}
+.meta {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+button.icon:hover {
+  background: var(--line);
+}
+button.icon.del:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+footer {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  text-align: right;
+}

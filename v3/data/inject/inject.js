@@ -13,9 +13,17 @@ if (document.querySelector('.itrisearch-guide-1')) {
   catch (e) {}
 }
 else {
+  /* modes (set by the background right before this file is injected):
+     'ocr'      draw once, release captures and runs OCR (legacy flow)
+     'save-ocr' draw once, release freezes the box; Enter saves the region
+                as well as running OCR; Esc cancels
+     'save'     like 'save-ocr' but only updates the stored region */
   self.capture = (function() {
     const rect = {};
+    const MODE = self.pickMode || 'ocr';
+    const GHOST = self.savedRegion || null;
     let box;
+    let hint;
 
     const calc = () => ({
       left: Math.min(rect.lt.x, rect.rb.x),
@@ -32,17 +40,71 @@ else {
         box.style[key] = value + 'px';
       }
     }
-    function remove() {
-      chrome.runtime.sendMessage({
-        method: 'captured',
-        ...calc(),
-        devicePixelRatio: window.devicePixelRatio,
-        title: document.title,
-        service: window.service // used by Reverse Image Search extension
-      });
+    function cleanup() {
       guide.remove();
       capture.remove();
       monitor.remove();
+    }
+    function confirm() {
+      document.removeEventListener('keydown', confirmKey, true);
+      const r = calc();
+      if (r.width < 1 || r.height < 1) {
+        chrome.runtime.sendMessage({
+          method: 'aborted'
+        });
+        return cleanup();
+      }
+      if (MODE !== 'ocr') {
+        chrome.runtime.sendMessage({
+          method: 'region-selected',
+          ...r,
+          ...(GHOST ? {
+            id: GHOST.id,
+            label: GHOST.label
+          } : {}),
+          origin: location.origin,
+          href: location.href,
+          title: document.title
+        });
+      }
+      if (MODE === 'save-ocr' || MODE === 'ocr') {
+        chrome.runtime.sendMessage({
+          method: 'captured',
+          ...r,
+          devicePixelRatio: window.devicePixelRatio,
+          title: document.title,
+          service: window.service // used by Reverse Image Search extension
+        });
+      }
+      cleanup();
+    }
+    function confirmKey(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.code === 'Enter') {
+        confirm();
+      }
+      else if (e.code === 'Escape') {
+        chrome.runtime.sendMessage({
+          method: 'aborted'
+        });
+        cleanup();
+      }
+    }
+    function freeze() {
+      document.removeEventListener('mousedown', mousedown);
+      hint.textContent = `${Math.round(calc().width)} × ${Math.round(calc().height)} — Enter to confirm · Esc to cancel`;
+      hint.classList.add('visible');
+      document.addEventListener('keydown', confirmKey, true);
+    }
+    function release() {
+      document.removeEventListener('mousemove', update);
+      if (MODE === 'ocr') {
+        confirm();
+      }
+      else {
+        freeze();
+      }
     }
     function mousedown(e) {
       // prevent content selection on Firefox
@@ -61,19 +123,35 @@ else {
       };
 
       document.addEventListener('mousemove', update);
-      document.addEventListener('mouseup', remove);
+      document.addEventListener('mouseup', release);
       document.documentElement.appendChild(box);
     }
 
     return {
       install: function() {
+        if (GHOST && MODE !== 'ocr') {
+          const g = document.createElement('div');
+          g.setAttribute('class', 'itrisearch-ghost');
+          g.style.left = GHOST.left + 'px';
+          g.style.top = GHOST.top + 'px';
+          g.style.width = GHOST.width + 'px';
+          g.style.height = GHOST.height + 'px';
+          document.documentElement.append(g);
+        }
+        if (MODE !== 'ocr') {
+          hint = document.createElement('div');
+          hint.setAttribute('class', 'itrisearch-hint');
+          hint.textContent = 'Drag a box over the text';
+          document.documentElement.append(hint);
+        }
         document.addEventListener('mousedown', mousedown);
       },
       remove: function() {
         document.removeEventListener('mousedown', mousedown);
         document.removeEventListener('mousemove', update);
-        document.removeEventListener('mouseup', remove);
-        for (const e of [...document.querySelectorAll('.itrisearch-box')]) {
+        document.removeEventListener('mouseup', release);
+        document.removeEventListener('keydown', confirmKey, true);
+        for (const e of [...document.querySelectorAll('.itrisearch-box,.itrisearch-ghost,.itrisearch-hint')]) {
           e.remove();
         }
       }

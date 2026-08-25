@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+  <header>
+    <img src="/data/icons/32.png" alt="">
+    <h1>OCR - Image Reader</h1>
+  </header>
+
+  <div id="actions">
+    <button id="quick">One-time OCR</button>
+    <button id="draw">+ Select New Region</button>
+  </div>
+
+  <section id="regions">
+    <h2>Saved Regions</h2>
+    <p id="empty" hidden>Nothing saved for this site yet. Draw a region over the text you want to read; it will be kept here for one-click re-runs.</p>
+    <ul id="list"></ul>
+  </section>
+
+  <footer>
+    <button id="open-options">Open Settings</button>
+  </footer>
+
+  <script src="shared.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

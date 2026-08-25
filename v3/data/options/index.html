@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Options Page :: OCR - Image Reader</title>
+  <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+  <header>
+    <img src="/data/icons/32.png" alt="">
+    <h1>OCR - Image Reader</h1>
+  </header>
+
+  <main>
+    <div class="option two">
+      <label for="close-after">Close the OCR window</label>
+      <select id="close-after">
+        <option value="-1">Do not close</option>
+        <option value="10">10 seconds after capture</option>
+        <option value="30">30 seconds after capture</option>
+        <option value="60">1 minute after capture</option>
+        <option value="300">5 minutes after capture</option>
+        <option value="clipboard">Copy to clipboard</option>
+      </select>
+      <p class="hint">The window can close itself a few seconds after each capture.</p>
+    </div>
+
+    <div class="option">
+      <label class="row">
+        <input type="checkbox" id="auto-clipboard">
+        <span>Copy to clipboard when done</span>
+      </label>
+      <p class="hint">Recognized text is copied automatically once reading finishes.</p>
+    </div>
+
+    <div class="option">
+      <label class="row">
+        <input type="checkbox" id="magnify">
+        <span>Show magnifier with inspector</span>
+      </label>
+      <p class="hint">Displays a magnified preview under the cursor while drawing a region.</p>
+    </div>
+
+    <div class="option">
+      <label class="row">
+        <input type="checkbox" id="legacy">
+        <span>Toolbar click starts capture directly (old behavior)</span>
+      </label>
+      <p class="hint">With this enabled the toolbar icon no longer opens a menu. You can always come back to this page by right-clicking the toolbar icon and selecting Options.</p>
+    </div>
+
+    <div class="option">
+      <div class="two">
+        <label>Saved regions</label>
+        <button id="clear-regions">Clear all saved regions</button>
+      </div>
+      <p class="hint">Deletes every saved region across all sites. Regions drawn again later are stored as new ones; this cannot be undone.</p>
+    </div>
+  </main>
+
+  <script src="/data/popup/shared.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

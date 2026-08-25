@@ -2,7 +2,9 @@
 .itrisearch-guide-1,
 .itrisearch-guide-2,
 .itrisearch-guide-3,
-.itrisearch-image {
+.itrisearch-image,
+.itrisearch-ghost,
+.itrisearch-hint {
   all: initial;
 }
 
@@ -50,6 +52,30 @@
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.itrisearch-ghost {
+  position: fixed;
+  z-index: 2147483639;
+  border: dashed 1px #fff;
+  box-shadow: 0 0 0 100px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+}
+
+.itrisearch-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 2147483644;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font: 13px system-ui, sans-serif;
+  color: #fff;
+  background: rgba(20, 20, 20, 0.85);
+  pointer-events: none;
+}
+.itrisearch-hint:not(.visible) {
+  opacity: 0.9;
 }
 
 .itrisearch-image {

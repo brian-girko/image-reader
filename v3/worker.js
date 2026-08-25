@@ -1,4 +1,10 @@
-'use strict';
+/* global originOf, getRegions*/
+
+// shared region helpers (popup/shared.js). Chrome: pulled into the service
+// worker here; Firefox: listed first in background.scripts, so guard it.
+if (typeof importScripts === 'function') {
+  self.importScripts('/data/popup/shared.js');
+}
 
 const notify = async e => {
   try {
@@ -77,7 +83,7 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
 const internals = new Map();
 const isCloned = tab => internals.has(tab.id) && tab.url.startsWith(chrome.runtime.getURL('/'));
 
-const onClicked = async (tab, cloned = false) => {
+const startCapture = async (tab, pickMode = 'ocr', savedRegion = null) => {
   if (isCloned(tab)) {
     chrome.tabs.sendMessage(tab.id, {
       method: 'capture'
@@ -133,6 +139,17 @@ const onClicked = async (tab, cloned = false) => {
         '48': '/data/icons/inspect/48.png'
       }
     });
+    // pass the picker mode (and any previous region to ghost-outline)
+    // before the content script runs; defaults keep the legacy flow
+    await chrome.scripting.executeScript({
+      target,
+      injectImmediately: true,
+      func: (mode, ghost) => {
+        self.pickMode = mode;
+        self.savedRegion = ghost;
+      },
+      args: [pickMode, savedRegion]
+    });
     const r = await chrome.scripting.executeScript({
       target,
       injectImmediately: true,
@@ -164,6 +181,99 @@ const onClicked = async (tab, cloned = false) => {
     catch (e) {
       notify(e);
     }
+  }
+};
+
+const onClicked = tab => startCapture(tab);
+
+/* toolbar click behavior: popup by default, legacy direct capture when the
+   user opts out. An empty popup string re-enables action.onClicked */
+const applyClickAction = async () => {
+  const prefs = await chrome.storage.local.get({
+    'click-action': 'popup'
+  });
+  chrome.action.setPopup({
+    popup: prefs['click-action'] === 'popup' ? '/data/popup/index.html' : ''
+  });
+};
+applyClickAction();
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes['click-action']) {
+    applyClickAction();
+    if (changes['click-action'].newValue === 'capture') {
+      notify('Toolbar click now starts capture directly. Revert anytime: right-click the toolbar icon and select Options.');
+    }
+  }
+});
+
+/* saved-region OCR pipeline. Captures are serialized so overlapping
+   requests queue up instead of interleaving screenshots */
+let chain = Promise.resolve();
+const enqueue = job => {
+  chain = chain.then(job, job);
+};
+
+const activeTab = async () => (await chrome.tabs.query({
+  active: true,
+  lastFocusedWindow: true
+}))[0];
+
+const captureRegion = async (tab, region) => {
+  if (!tab) {
+    return notify('No active tab');
+  }
+  if (!region) {
+    return notify('Saved region not found');
+  }
+  if (region.origin && originOf(tab.url) !== region.origin) {
+    notify(`Heads up: this region was drawn on ${region.origin}`);
+  }
+  try {
+    // let any overlay disappear and wait for two paints before the shot,
+    // so the extension's own UI can never end up inside the crop
+    await chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      injectImmediately: true,
+      func: () => new Promise(resolve => requestAnimationFrame(() =>
+        requestAnimationFrame(() => resolve())
+      ))
+    });
+    const image = await new Promise((resolve, reject) => chrome.tabs.captureVisibleTab(tab.windowId, {
+      format: 'png'
+    }, href => {
+      const e = chrome.runtime.lastError;
+      return e ? reject(Error(e.message)) : resolve(href);
+    }));
+    // ocr-it's scale math: never trust a stored devicePixelRatio; divide the
+    // screenshot's own width by the live innerWidth, so zoom changes and
+    // retina/non-retina differences come out right
+    const [shot] = await chrome.scripting.executeScript({
+      target: {
+        tabId: tab.id
+      },
+      injectImmediately: true,
+      func: src => new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img.naturalWidth / window.innerWidth);
+        img.onerror = () => reject(Error('cannot decode the screenshot'));
+        img.src = src;
+      }),
+      args: [image]
+    });
+    proceed(tab.id, image, {
+      method: 'proceed',
+      left: region.left,
+      top: region.top,
+      width: region.width,
+      height: region.height,
+      devicePixelRatio: (shot && shot.result) || 1
+    });
+  }
+  catch (e) {
+    console.warn(e);
+    notify(e);
   }
 };
 
@@ -199,16 +309,24 @@ const standalone = async ({
 chrome.action.onClicked.addListener(onClicked);
 chrome.commands.onCommand.addListener(async command => {
   if (command === 'simulate_action') {
-    const tabs = await chrome.tabs.query({
-      active: true,
-      lastFocusedWindow: true
-    });
-    if (tabs.length) {
-      onClicked(tabs[0]);
-    }
+    onClicked(await activeTab());
   }
   else if (command === 'standalone') {
     standalone({});
+  }
+  else if (command === 'draw-region') {
+    startCapture(await activeTab(), 'save-ocr').catch(notify);
+  }
+  else if (command === 'capture-region') {
+    const tab = await activeTab();
+    const origin = originOf(tab?.url);
+    const regions = (await getRegions())
+      .filter(r => r.origin && r.origin === origin)
+      .sort((a, b) => b.createdAt - a.createdAt);
+    if (!regions.length) {
+      return notify('No saved region for this site yet. Draw one first.');
+    }
+    enqueue(() => captureRegion(tab, regions[0]));
   }
 });
 
@@ -296,6 +414,53 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
         }
       });
     }
+  }
+  else if (request.method === 'region-selected') {
+    const {left, top, width, height} = request;
+    if (width && height) {
+      saveRegion({
+        id: request.id || 'r' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        label: request.label || request.title || request.origin || 'Region',
+        origin: request.origin || originOf(sender.tab?.url || request.href || ''),
+        left,
+        top,
+        width,
+        height,
+        createdAt: Date.now()
+      }).catch(notify);
+    }
+  }
+  else if (request.method === 'draw-region') {
+    (async() => startCapture(await activeTab(), 'save-ocr').catch(notify))();
+  }
+  else if (request.method === 'quick-ocr') {
+    (async() => startCapture(await activeTab(), 'ocr').catch(notify))();
+  }
+  else if (request.method === 'redraw-region') {
+    (async() => {
+      const region = await findRegion(request.id);
+      if (!region) {
+        return notify('Saved region not found');
+      }
+      startCapture(await activeTab(), 'save', region).catch(notify);
+    })();
+  }
+  else if (request.method === 'capture-region') {
+    (async() => {
+      const region = await findRegion(request.id);
+      if (!region) {
+        return notify('Saved region not found');
+      }
+      enqueue(async() => captureRegion(await activeTab(), region));
+    })();
+  }
+  else if (request.method === 'get-regions') {
+    (async() => response(await getRegions()))();
+    return true;
+  }
+  else if (request.method === 'delete-region') {
+    deleteRegion(request.id).finally(response);
+    return true;
   }
   else if (request.method === 'clipboard-permission') {
     chrome.permissions.request({
