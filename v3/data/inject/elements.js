@@ -661,7 +661,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         // open the shared options page (this element lives on an extension
         // page, so the API is available here)
         this.shadowRoot.getElementById('settings').onclick = () => {
-          chrome.runtime.openOptionsPage();
+          this.dispatchEvent(new Event('open-options'));
         };
         // apply commands on cross-origin (Firefox Only)
         this.addEventListener('command', () => {

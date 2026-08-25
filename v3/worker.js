@@ -1,4 +1,4 @@
-/* global originOf, getRegions*/
+/* global originOf, getRegions, saveRegion, findRegion, deleteRegion*/
 
 // shared region helpers (popup/shared.js). Chrome: pulled into the service
 // worker here; Firefox: listed first in background.scripts, so guard it.
@@ -331,7 +331,12 @@ chrome.commands.onCommand.addListener(async command => {
 });
 
 chrome.runtime.onMessage.addListener((request, sender, response) => {
-  if (request.method === 'captured' || request.method === 'aborted') {
+  // 'region-selected' is the only completion signal of an edit ('save'
+  // mode), so it must restore the toolbar icon like captured/aborted do
+  if (
+    request.method === 'captured' || request.method === 'aborted' ||
+    request.method === 'region-selected'
+  ) {
     chrome.action.setIcon({
       tabId: sender.tab.id,
       path: {
@@ -431,31 +436,31 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     }
   }
   else if (request.method === 'draw-region') {
-    (async() => startCapture(await activeTab(), 'save-ocr').catch(notify))();
+    activeTab().then(tab => startCapture(tab, 'save-ocr')).catch(notify);
   }
   else if (request.method === 'quick-ocr') {
-    (async() => startCapture(await activeTab(), 'ocr').catch(notify))();
+    activeTab().then(tab => startCapture(tab, 'ocr')).catch(notify);
   }
   else if (request.method === 'redraw-region') {
-    (async() => {
-      const region = await findRegion(request.id);
+    findRegion(request.id).then(region => {
       if (!region) {
         return notify('Saved region not found');
       }
-      startCapture(await activeTab(), 'save', region).catch(notify);
-    })();
+      return activeTab().then(tab => startCapture(tab, 'save', region));
+    }).catch(notify);
   }
   else if (request.method === 'capture-region') {
-    (async() => {
-      const region = await findRegion(request.id);
+    findRegion(request.id).then(region => {
       if (!region) {
         return notify('Saved region not found');
       }
-      enqueue(async() => captureRegion(await activeTab(), region));
-    })();
+      return activeTab().then(tab => {
+        return enqueue(() => captureRegion(tab, region));
+      });
+    });
   }
   else if (request.method === 'get-regions') {
-    (async() => response(await getRegions()))();
+    getRegions().then(response);
     return true;
   }
   else if (request.method === 'delete-region') {
@@ -471,6 +476,9 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   else if (request.method === 'get-image') {
     response(internals.get(sender.tab.id));
     // internals.delete(sender.tab.id);
+  }
+  else if (request.method === 'open-options') {
+    chrome.runtime.openOptionsPage();
   }
 });
 

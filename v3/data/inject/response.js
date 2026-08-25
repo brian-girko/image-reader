@@ -188,6 +188,16 @@
       t(e.message);
     }
   });
+  em.addEventListener('open-options', () => {
+    if (chrome.runtime && chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    }
+    else {
+      chrome.runtime.sendMessage({
+        method: 'open-options'
+      });
+    }
+  });
   em.addEventListener('language-changed', () => run());
   em.addEventListener('accuracy-changed', () => {
     chrome.runtime.sendMessage({

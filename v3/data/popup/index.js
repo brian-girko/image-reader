@@ -120,10 +120,9 @@ const init = async () => {
   });
   currentOrigin = tab ? originOf(tab.url) : '';
 
-  if (!currentOrigin || currentOrigin.startsWith('chrome')) {
+  if (!currentOrigin || currentOrigin === 'null' || currentOrigin.startsWith('chrome') || currentOrigin.startsWith('moz-')) {
     currentOrigin = '';
   }
-  console.log(currentOrigin);
   if (currentOrigin === '') {
     $('#draw').disabled = true;
   }
