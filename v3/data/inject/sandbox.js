@@ -33,10 +33,18 @@ const service = self.service = {
       const s = document.createElement('script');
       s.src = '/data/inject/response.js';
       s.onload = () => {
-        const resize = () => chrome.runtime.sendMessage({
-          method: 'resize',
-          height: `min(100vh, ${document.body.scrollHeight}px)`
-        });
+        const resize = () => {
+          // let the browser resize the frame (Chrome 154+), the SW relay is the fallback
+          if ('requestResize' in window) {
+            window.requestResize();
+          }
+          else {
+            chrome.runtime.sendMessage({
+              method: 'resize',
+              height: `min(100vh, ${document.body.scrollHeight}px)`
+            });
+          }
+        };
         resize();
 
         const em = document.querySelector('ocr-result:last-of-type');

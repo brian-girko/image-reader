@@ -55,6 +55,12 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
       const e = document.createElement('iframe');
       e.setAttribute('allow', 'clipboard-write');
       e.classList.add('gfrunj');
+      // let the browser size the frame to its content (Chrome 154+)
+      const contentSizing = CSS.supports('frame-sizing', 'content-height') ? `
+        height: auto;
+        max-height: 100vh;
+        frame-sizing: content-height;
+      ` : '';
       e.style = `
         position: fixed;
         height: 0;
@@ -65,6 +71,7 @@ const proceed = (tabId, href, request) => chrome.scripting.executeScript({
         right: 10px;
         color-scheme: light;
         z-index: 2147483647;
+        ${contentSizing}
       `;
       e.onload = () => {
         e.contentWindow.postMessage({

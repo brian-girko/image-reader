@@ -23,6 +23,14 @@ iframe {
 iframe.hidden {
   display: none;
 }
+/* let the browser size the frame to its content (Chrome 154+) */
+@supports (frame-sizing: content-height) {
+  iframe {
+    height: auto;
+    max-height: 100vh;
+    frame-sizing: content-height;
+  }
+}
 #toast {
   text-align: center;
   padding: 10px;
