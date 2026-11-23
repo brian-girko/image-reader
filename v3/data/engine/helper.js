@@ -46,7 +46,7 @@ if (typeof self.execute === 'undefined') {
   });
 }
 
-self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise(resolve => {
+self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise((resolve, reject) => {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const img = new Image();
@@ -68,6 +68,9 @@ self.crop = (href, {width, height, left, top}, mode = 'normal') => new Promise(r
 
     resolve(canvas.toDataURL());
   };
+  // a missing or malformed href must reject; an unsettled promise would
+  // leave the panel on "Please wait..." forever
+  img.onerror = () => reject(Error('cannot decode the image'));
   img.src = href;
 });
 

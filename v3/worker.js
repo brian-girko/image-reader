@@ -292,6 +292,12 @@ const standalone = async ({
   title = '',
   message = ''
 }) => {
+  // 'selector' mode crops the stored image; without one the drawing tool
+  // guides the user into a dead end (mcp.json documents the requirement)
+  if (selector === true && !image) {
+    throw Error('The "selector" mode requires an "image" to be provided');
+  }
+
   const args = new URLSearchParams();
   args.set('mode', 'standalone');
   args.set('proceed', proceed);
@@ -361,9 +367,15 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       return notify('Please select a region. Either width or height of the captured area was zero');
     }
     if (isCloned(sender.tab)) {
+      const href = internals.get(sender.tab.id);
+      // an empty image (e.g. MCP "selector" without one) would leave the
+      // panel waiting on an undecodable href forever
+      if (!href) {
+        return notify('No image is available to crop. Provide an image or drop one into the OCR window.');
+      }
       chrome.tabs.sendMessage(sender.tab.id, {
         method: 'proceed',
-        href: internals.get(sender.tab.id),
+        href,
         request
       });
     }
@@ -371,6 +383,12 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
       chrome.tabs.captureVisibleTab(sender.tab.windowId, {
         format: 'png'
       }, href => {
+        const e = chrome.runtime.lastError;
+        // a failed capture delivers no href; proceeding with it would hang
+        // the panel on "Please wait..." forever
+        if (e || !href) {
+          return notify(e ? e.message : 'Cannot capture the visible tab');
+        }
         proceed(sender.tab.id, href, request);
       });
     }
@@ -573,7 +591,18 @@ chrome.runtime.onConnectExternal.addListener(eport => {
         });
       };
       chrome.runtime.onConnect.addListener(observe);
-      const win = await standalone(request);
+      let win;
+      try {
+        win = await standalone(request);
+      }
+      catch (e) {
+        // tell the agent instead of leaving it waiting for a window that
+        // will never open (schema violations like "selector" without image)
+        chrome.runtime.onConnect.removeListener(observe);
+        return eport.postMessage({
+          error: e.message
+        });
+      }
       owned.add(win.id);
       registry.set(win.id, {
         owned,

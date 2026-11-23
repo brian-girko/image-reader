@@ -52,6 +52,11 @@ chrome.runtime.sendMessage({
       img.height = img.naturalHeight / dpr;
       div.appendChild(img);
     };
+    // a malformed data URI (e.g. from an external MCP client) must not fail
+    // silently; the OCR panel reports the same decode failure
+    img.onerror = () => {
+      document.getElementById('toast').textContent = 'Cannot display the provided image. It might be malformed; double-click to select a local image instead.';
+    };
     img.src = href;
 
     // proceed the whole image

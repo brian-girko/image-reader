@@ -57,15 +57,21 @@
 
   // if there is oResult object, run in inverted colors
   const run = em.run = async (oResult, mode = 'normal') => {
-    const src = await self.crop(em.href, em.box, mode);
-
-    command('progress', 0);
-    command('clear');
-
     const lang = oResult?.lang || em.dataset.language || 'eng';
 
     let o;
+    // true when this invocation only scheduled a retry; the queue release
+    // is then handed over to the rerun
+    let retry = false;
+
     try {
+      // must live inside the try: a rejected crop (bad href) surfaces as an
+      // error message instead of an eternal "Please wait..."
+      const src = await self.crop(em.href, em.box, mode);
+
+      command('progress', 0);
+      command('clear');
+
       if (lang !== 'detect') {
         o = await ocr(lang, src);
       }
@@ -130,36 +136,43 @@
       if (o.confidence < 50 && !oResult) {
         command('message', `Low confidence (${o.confidence}%). Trying with inverted colors. Please wait...`);
         await new Promise(resolve => setTimeout(resolve, 2000));
+        retry = true;
         run(o, 'invert');
-        return;
       }
-      if (mode === 'invert' && o.confidence < 20 && oResult.confidence < 20) {
+      else if (mode === 'invert' && o.confidence < 20 && oResult.confidence < 20) {
         command('message', `Low confidence (${o.confidence}%) again! Trying with inverted colors. Please wait...`);
 
+        retry = true;
         run(o, 'gray');
-        return;
-      }
-      if (oResult) {
-        if (oResult.confidence > o.confidence) {
-          o = oResult;
-        }
-      }
-
-      if (o.text.trim() === '') {
-        command('build', {
-          hocr: '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>'
-        });
       }
       else {
-        command('build', o);
-        command('enable');
+        if (oResult && oResult.confidence > o.confidence) {
+          o = oResult;
+        }
+
+        if (o.text.trim() === '') {
+          command('build', {
+            hocr: '<span style="color: red">No text was detected! Edit the image and drop it here to retry!</span>'
+          });
+        }
+        else {
+          command('build', o);
+          command('enable');
+        }
       }
     }
     catch (e) {
       console.warn(e);
       command('message', e.message || e);
     }
-    service.next();
+    finally {
+      // release the queue on terminal states only; a scheduled retry hands
+      // the release to its own completion (the early "return"s used to
+      // skip this and leak the busy flag)
+      if (retry === false) {
+        service.next();
+      }
+    }
   };
 
   // events
