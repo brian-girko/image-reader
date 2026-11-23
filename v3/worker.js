@@ -577,8 +577,21 @@ chrome.runtime.onConnectExternal.addListener(eport => {
       request.agent = true; // to let the popup window know it needs to connect to this port
       closing = false; // a fresh window lifecycle begins
 
-      const observe = iport => {
+      let connected = false; // the agent page attached its relay port
+      // both watchers exist only once the window does; the guards keep
+      // cleanup() safe if a foreign connect sneaks in before that
+      let timer; // watchdog
+      let onEarlyClose; // window-death watcher
+      const cleanup = () => {
         chrome.runtime.onConnect.removeListener(observe);
+        if (onEarlyClose) {
+          chrome.windows.onRemoved.removeListener(onEarlyClose);
+        }
+        clearTimeout(timer);
+      };
+      const observe = iport => {
+        connected = true;
+        cleanup();
 
         iport.onMessage.addListener(r => eport.postMessage(r));
         iport.onDisconnect.addListener(() => {
@@ -624,7 +637,36 @@ chrome.runtime.onConnectExternal.addListener(eport => {
         });
       }
 
-      setTimeout(() => chrome.runtime.onConnect.removeListener(observe), 5000);
+      // the agent page must connect within 5s of the window opening; on a
+      // slow machine it might not, so report the timeout instead of leaving
+      // the agent waiting for a relay that is already gone
+      timer = setTimeout(() => {
+        if (connected) {
+          return;
+        }
+        cleanup();
+        if (!closing && !dead) {
+          eport.postMessage({
+            error: 'The OCR window did not connect within 5 seconds. Retry request-ocr.'
+          });
+        }
+      }, 5000);
+      // the window might also die before its page ever connects (user close,
+      // crashed renderer); the registry cleanup alone would leave the agent
+      // hanging, so report it right away
+      onEarlyClose = windowId => {
+        if (windowId !== win.id || connected) {
+          return;
+        }
+        cleanup();
+        if (!closing && !dead) {
+          eport.postMessage({
+            cmd: 'disconnected',
+            value: 'OCR window is closed before it connected'
+          });
+        }
+      };
+      chrome.windows.onRemoved.addListener(onEarlyClose);
     }
     else if (request.cmd === 'close') {
       // suppress the trailing 'disconnected' when the popup unloads
