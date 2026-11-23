@@ -466,7 +466,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           });
         }
 
-        if (this['close-after'] !== 'clipboard') {
+        if (this.prefs['close-after'] !== 'clipboard') {
           if (this.prefs['close-after'] > 0) {
             let counter = this.prefs['close-after'];
             const tick = () => {
