@@ -23,7 +23,7 @@ self.fetch = new Proxy(self.fetch, {
           console.warn('Cannot download the traineddata', href, e);
           const path = href.split('.com/')[1];
 
-          return Reflect.apply(target, self, [`https://github.com/naptha/tessdata/blob/gh-pages/${path}?raw=true`, options]).then(validate);
+          return Reflect.apply(target, self, [`https://raw.githubusercontent.com/naptha/tessdata/gh-pages/${path}`, options]).then(validate);
         });
         // save
         cache.put(href, r.clone());

@@ -15,7 +15,7 @@
   ],
   "host_permissions": [
     "https://tessdata.projectnaptha.com/*.gz",
-    "https://github.com/naptha/tessdata/blob/gh-pages/*.gz?raw=true"
+    "https://raw.githubusercontent.com/naptha/tessdata/*"
   ],
   "homepage_url": "https://webextension.org/listing/ocr.html",
   "background": {
