@@ -431,9 +431,24 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
           detail: o
         }));
 
+        // remember which engine produced the result; Tesseract's hOCR is machine
+        // markup (bbox ids and titles), not user-facing formatting, so it must
+        // never reach the clipboard as rich text
+        this.dataset.engine = o.hocr ? 'tesseract' : 'granite';
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(o.hocr || o.html, 'text/html');
         this.clear();
+
+        if (this.dataset.engine === 'tesseract') {
+          // drop the machine attributes so that selection copies (Ctrl+C) are
+          // clean too; the panel's own CSS only relies on class names
+          for (const e of doc.querySelectorAll('[id], [title], [lang]')) {
+            e.removeAttribute('id');
+            e.removeAttribute('title');
+            e.removeAttribute('lang');
+          }
+        }
 
         for (const child of [...doc.body.childNodes]) {
           this.shadowRoot.getElementById('result').append(child);
@@ -514,15 +529,21 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
         // copy
         this.shadowRoot.getElementById('copy').onclick = async () => {
           const {text, html} = this.result;
-          try {
-            const item = new ClipboardItem({
-              'text/plain': new Blob([text], {
-                type: 'text/plain'
-              }),
-              'text/html': new Blob([html], {
-                type: 'text/html'
-              })
+          // Tesseract output is plain text only; writing its markup as rich text
+          // makes apps like LibreOffice Writer convert the bbox ids into
+          // bookmarks (displayed as gray I-beam marks)
+          const flavors = {
+            'text/plain': new Blob([text], {
+              type: 'text/plain'
+            })
+          };
+          if (this.dataset.engine !== 'tesseract') {
+            flavors['text/html'] = new Blob([html], {
+              type: 'text/html'
             });
+          }
+          try {
+            const item = new ClipboardItem(flavors);
             await navigator.clipboard.write([item]);
           }
           catch (e) {
