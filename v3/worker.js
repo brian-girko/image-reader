@@ -91,6 +91,11 @@ const internals = new Map();
 const isCloned = tab => internals.has(tab.id) && tab.url.startsWith(chrome.runtime.getURL('/'));
 
 const startCapture = async (tab, pickMode = 'ocr', savedRegion = null) => {
+  // the last-focused window can have no active tab (e.g. undocked DevTools);
+  // isCloned would crash reading tab.id before any fallback could run
+  if (!tab) {
+    return notify('No active tab');
+  }
   if (isCloned(tab)) {
     chrome.tabs.sendMessage(tab.id, {
       method: 'capture'

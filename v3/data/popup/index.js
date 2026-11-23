@@ -36,9 +36,11 @@ const render = async () => {
 
     main.append(label, meta);
 
+    // like the action buttons below, await the send before closing so a
+    // cold-starting worker cannot lose the message to window.close()
     const run = icon('run', 'Run OCR on this region');
-    run.addEventListener('click', () => {
-      chrome.runtime.sendMessage({
+    run.addEventListener('click', async () => {
+      await chrome.runtime.sendMessage({
         method: 'capture-region',
         id: region.id
       });
@@ -46,8 +48,8 @@ const render = async () => {
     });
 
     const redraw = icon('redraw', 'Redraw this region');
-    redraw.addEventListener('click', () => {
-      chrome.runtime.sendMessage({
+    redraw.addEventListener('click', async () => {
+      await chrome.runtime.sendMessage({
         method: 'redraw-region',
         id: region.id
       });
@@ -133,13 +135,17 @@ renameDialog.addEventListener('close', async () => {
   }
 });
 
-// actions
-$('#draw').addEventListener('click', () => {
-  chrome.runtime.sendMessage({method: 'draw-region'});
+// actions. The promise returned by sendMessage resolves only after an idle
+// service worker has been woken and has dispatched the message; closing the
+// popup before that races context teardown against the worker's cold start
+// and can drop the message (the region picker then silently never appeared).
+// Await first, close second.
+$('#draw').addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({method: 'draw-region'});
   window.close();
 });
-$('#quick').addEventListener('click', () => {
-  chrome.runtime.sendMessage({method: 'quick-ocr'});
+$('#quick').addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({method: 'quick-ocr'});
   window.close();
 });
 $('#open-options').addEventListener('click', () => {
