@@ -584,6 +584,14 @@ chrome.runtime.onConnectExternal.addListener(eport => {
       if (dead) {
         chrome.windows.remove(win.id).catch(() => {});
       }
+      else {
+        // documented first message (mcp.json outputSchema); the agent is
+        // told to WAIT for it, so post before any relayed popup traffic
+        eport.postMessage({
+          cmd: 'report',
+          value: 'OCR window is opened'
+        });
+      }
 
       setTimeout(() => chrome.runtime.onConnect.removeListener(observe), 5000);
     }
