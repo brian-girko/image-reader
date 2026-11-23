@@ -542,9 +542,11 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
               type: 'text/html'
             });
           }
+          let success = false;
           try {
             const item = new ClipboardItem(flavors);
             await navigator.clipboard.write([item]);
+            success = true;
           }
           catch (e) {
             // console.info('Copy failed. Trying alternative method', e);
@@ -554,16 +556,34 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
             input.style.left = '-9999px';
             document.body.append(input);
             input.select();
-            document.execCommand('copy');
+            try {
+              // execCommand reports false without user activation or the
+              // clipboardWrite permission; a silent fallback must not read
+              // as success
+              success = document.execCommand('copy');
+            }
+            catch (ee) {}
             input.remove();
           }
-          if (this.prefs['close-after'] === 'clipboard') {
-            this.shadowRoot.getElementById('close').click();
+          if (success) {
+            if (this.prefs['close-after'] === 'clipboard') {
+              this.shadowRoot.getElementById('close').click();
+            }
+            this.toast('copy', {
+              new: 'Done',
+              old: 'Copy Text'
+            });
           }
-          this.toast('copy', {
-            new: 'Done',
-            old: 'Copy Text'
-          });
+          else {
+            // the auto-clipboard path runs without user activation, so a
+            // missing clipboardWrite permission (or an unfocused document)
+            // lands here; keep the panel open so the user can retry or
+            // grant the permission
+            this.toast('copy', {
+              new: 'Failed',
+              old: 'Copy Text'
+            });
+          }
         };
         // post
         this.shadowRoot.getElementById('post').onclick = e => {

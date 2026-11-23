@@ -263,7 +263,9 @@
       chrome.runtime.sendMessage({
         method: 'clipboard-permission'
       }, granted => {
-        if (granted === undefined) {
+        // declined (false) and failed (undefined) both leave auto-clipboard
+        // unable to write; this matches the options page behavior
+        if (granted !== true) {
           alert(`Please enable the "Input data to the clipboard" permission for this extension in the browser's extensions manager.`);
         }
       });
