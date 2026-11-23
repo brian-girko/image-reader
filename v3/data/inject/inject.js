@@ -72,8 +72,7 @@ else {
           method: 'captured',
           ...r,
           devicePixelRatio: window.devicePixelRatio,
-          title: document.title,
-          service: window.service // used by Reverse Image Search extension
+          title: document.title
         });
       }
       cleanup();
