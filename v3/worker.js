@@ -518,43 +518,86 @@ chrome.runtime.onMessageExternal.addListener((request, sender, response) => {
   }
 });
 
-/* external access */
-const wins = new Set();
+/* external access: each MCP connection owns the windows it opened */
+const registry = new Map(); // windowId -> {owned: Set, tabId: number}
+
+// the single source of truth for window death: keeps every connection's
+// owned set accurate (user close, programmatic close, port drop) and
+// releases the stored image once the popup tab is gone
+chrome.windows.onRemoved.addListener(windowId => {
+  const entry = registry.get(windowId);
+  if (entry) {
+    entry.owned.delete(windowId);
+    if (entry.tabId !== undefined) {
+      internals.delete(entry.tabId);
+    }
+    registry.delete(windowId);
+  }
+});
+
 chrome.runtime.onConnectExternal.addListener(eport => {
-  let win;
+  const owned = new Set(); // window ids opened by THIS connection
+  let closing = false; // true while the removal is initiated by us
+  let dead = false; // external port is gone
+
   eport.onDisconnect.addListener(() => {
-    chrome.windows.remove(win.id).catch(() => {});
+    dead = true;
+    // the popup relay must never post to a disconnected port
+    closing = true;
+    for (const id of owned) {
+      chrome.windows.remove(id).catch(() => {});
+    }
+    owned.clear();
   });
+
   eport.onMessage.addListener(async request => {
     console.log(request);
 
     if (request.cmd === 'request-ocr') {
       request.agent = true; // to let the popup window know it needs to connect to this port
+      closing = false; // a fresh window lifecycle begins
+
       const observe = iport => {
         chrome.runtime.onConnect.removeListener(observe);
 
         iport.onMessage.addListener(r => eport.postMessage(r));
         iport.onDisconnect.addListener(() => {
           const e = chrome.runtime.lastError;
-          eport.postMessage({
-            cmd: 'disconnected',
-            value: e ? e.message : ''
-          });
+          // quiet when the removal was initiated by close / port drop
+          if (!closing) {
+            eport.postMessage({
+              cmd: 'disconnected',
+              value: e ? e.message : ''
+            });
+          }
         });
       };
       chrome.runtime.onConnect.addListener(observe);
-      win = await standalone(request);
-      wins.add(win);
+      const win = await standalone(request);
+      owned.add(win.id);
+      registry.set(win.id, {
+        owned,
+        tabId: win.tabs[0].id
+      });
+      // the port dropped while the window was being created; onRemoved
+      // still performs the registry and internals cleanup
+      if (dead) {
+        chrome.windows.remove(win.id).catch(() => {});
+      }
 
       setTimeout(() => chrome.runtime.onConnect.removeListener(observe), 5000);
     }
     else if (request.cmd === 'close') {
-      for (const win of wins) {
-        chrome.windows.remove(win.id).catch(() => {});
+      // suppress the trailing 'disconnected' when the popup unloads
+      closing = true;
+      const had = owned.size > 0;
+      for (const id of owned) {
+        chrome.windows.remove(id).catch(() => {});
       }
+      owned.clear();
       eport.postMessage({
-        cmd: 'report',
-        value: wins.size ? 'OCR window is closed' : 'no OCR window to close'
+        cmd: 'close',
+        status: had ? 'OCR window is closed' : 'no OCR window to close'
       });
     }
     else {
