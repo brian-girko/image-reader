@@ -3,6 +3,21 @@
 const args = new URLSearchParams(location.search);
 const f = document.querySelector('iframe');
 
+// frame readiness probe; the iframe starts loading at page-parse time, so its
+// 'load' event can fire before any handler is attached. Resolve from the
+// already-complete state when possible. The URL check is required because the
+// initial about:blank placeholder also reports readyState 'complete' before
+// the sandbox navigation commits.
+const iframeReady = new Promise(resolve => {
+  const doc = f.contentDocument;
+  if (doc && doc.readyState === 'complete' && doc.location.pathname === '/data/inject/sandbox.html') {
+    resolve();
+  }
+  else {
+    f.addEventListener('load', resolve, {once: true});
+  }
+});
+
 document.title = args.get('title');
 
 if (args.get('mode') === 'standalone') {
@@ -41,7 +56,9 @@ chrome.runtime.sendMessage({
 
     // proceed the whole image
     if (args.get('proceed') === 'true') {
-      f.onload = () => {
+      // the frame may have finished loading before the get-image round-trip
+      // resolved; iframeReady covers both sides of that race
+      iframeReady.then(() => {
         f.classList.remove('hidden');
         f.contentWindow.postMessage({
           method: 'proceed',
@@ -55,7 +72,7 @@ chrome.runtime.sendMessage({
             height: 0
           }
         }, '*');
-      };
+      });
     }
   }
 });
