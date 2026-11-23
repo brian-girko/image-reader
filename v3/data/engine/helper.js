@@ -42,7 +42,13 @@ if (typeof self.execute === 'undefined') {
       accuracy
     }, '*');
     document.documentElement.append(frame);
-    signal.addEventListener('abort', () => frame.remove());
+    // closing the panel (or an accuracy switch) aborts the engine; the
+    // await must settle, or run()'s finally never releases the queue
+    signal.addEventListener('abort', () => {
+      frame.remove();
+      delete methods[id];
+      reject(Error('Aborted'));
+    });
   });
 }
 

@@ -214,7 +214,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 /* saved-region OCR pipeline. Captures are serialized so overlapping
-   requests queue up instead of interleaving screenshots */
+   requests queue up instead of interleaving screenshots; the OCR jobs
+   behind each screenshot are serialized per-tab by the sandbox itself
+   (service.add in data/inject/sandbox.js) */
 let chain = Promise.resolve();
 const enqueue = job => {
   chain = chain.then(job, job);

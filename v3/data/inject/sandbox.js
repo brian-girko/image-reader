@@ -32,6 +32,12 @@ const service = self.service = {
     }, prefs => {
       const s = document.createElement('script');
       s.src = '/data/inject/response.js';
+      // a failed injection must still release the queue, otherwise the busy
+      // flag sticks and every queued job waits forever
+      s.onerror = () => {
+        console.warn('failed to load response.js');
+        service.next();
+      };
       s.onload = () => {
         const resize = () => {
           // let the browser resize the frame (Chrome 154+), the SW relay is the fallback
@@ -47,43 +53,52 @@ const service = self.service = {
         };
         resize();
 
-        const em = document.querySelector('ocr-result:last-of-type');
-        em.command('configure', prefs);
-        em.command('prepare');
-        // report to top window
-        if (report) {
-          em.addEventListener('result', e => {
-            parent.postMessage({
-              cmd: 'result',
-              value: e.detail
+        try {
+          const em = document.querySelector('ocr-result:last-of-type');
+          em.command('configure', prefs);
+          em.command('prepare');
+          // report to top window
+          if (report) {
+            em.addEventListener('result', e => {
+              parent.postMessage({
+                cmd: 'result',
+                value: e.detail
+              });
             });
-          });
-        }
-        em.addEventListener('mode-changed', resize);
-        em.addEventListener('closed', e => {
-          if (document.querySelector('ocr-result') && !e.shiftKey) {
-            resize();
           }
-          else {
-            for (const or of document.querySelectorAll('ocr-result')) {
-              or.remove();
+          em.addEventListener('mode-changed', resize);
+          em.addEventListener('closed', e => {
+            // keep the frame alive while jobs are queued: the aborted run
+            // settles right after this listener and starts the next job
+            if ((document.querySelector('ocr-result') || service.jobs.length) && !e.shiftKey) {
+              resize();
             }
-            chrome.runtime.sendMessage({
-              method: 'remove-iframe'
-            });
-          }
-        });
+            else {
+              for (const or of document.querySelectorAll('ocr-result')) {
+                or.remove();
+              }
+              chrome.runtime.sendMessage({
+                method: 'remove-iframe'
+              });
+            }
+          });
 
-        const {devicePixelRatio, left, top, width, height} = request;
+          const {devicePixelRatio, left, top, width, height} = request;
 
-        em.href = href;
-        em.box = {
-          width: width * devicePixelRatio,
-          height: height * devicePixelRatio,
-          left: left * devicePixelRatio,
-          top: top * devicePixelRatio
-        };
-        em.run();
+          em.href = href;
+          em.box = {
+            width: width * devicePixelRatio,
+            height: height * devicePixelRatio,
+            left: left * devicePixelRatio,
+            top: top * devicePixelRatio
+          };
+          em.run();
+        }
+        catch (e) {
+          // a broken panel must not hold the queue hostage
+          console.warn(e);
+          service.next();
+        }
       };
       document.body.append(s);
     });
@@ -92,6 +107,8 @@ const service = self.service = {
 
 onmessage = e => {
   if (e.data && e.data.method === 'proceed') {
-    service.run(e.data);
+    // captures and blank-page relays funnel through here; queueing them
+    // keeps one engine at a time, same as the drag-and-drop path
+    service.add(e.data);
   }
 };
