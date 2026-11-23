@@ -19,6 +19,18 @@
     <h2>Saved Regions</h2>
     <p id="empty" hidden>Nothing saved for this site yet. Draw a region over the text you want to read; it will be kept here for one-click re-runs.</p>
     <ul id="list"></ul>
+
+    <dialog id="rename" aria-labelledby="rename-title">
+      <h2 id="rename-title">Rename region</h2>
+      <form method="dialog">
+        <label for="rename-input">New name</label>
+        <input id="rename-input" autofocus>
+        <div id="rename-actions">
+          <button value="save" id="rename-save">Save</button>
+          <button value="cancel" id="rename-cancel">Cancel</button>
+        </div>
+      </form>
+    </dialog>
   </section>
 
   <footer>

@@ -54,6 +54,9 @@ const render = async () => {
       window.close();
     });
 
+    const renameBtn = icon('rename', 'Rename this region');
+    renameBtn.addEventListener('click', () => rename(region));
+
     const del = icon('del', 'Delete this region');
     del.classList.add('del');
     del.addEventListener('click', async () => {
@@ -61,7 +64,7 @@ const render = async () => {
       render();
     });
 
-    li.append(main, run, redraw, del);
+    li.append(main, run, redraw, renameBtn, del);
     list.append(li);
   }
 };
@@ -69,6 +72,7 @@ const render = async () => {
 const ICONS = {
   run: '<svg viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M4 2l9 6-9 6z"/></svg>',
   redraw: '<svg viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M11.5 1.5l3 3L6 13l-3.8.8L3 10zM11 2l-.7.7-8 8-.5 2 2-.5 8-8L13 3z"/></svg>',
+  rename: '<svg viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M5 1h6v2H9v10h2v2H5v-2h2V3H5z"/></svg>',
   del: '<svg viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M6 2h4v1h4v1H2V3h4zm-3 3h10l-.7 9a1 1 0 0 1-1 .9H4.7a1 1 0 0 1-1-.9z"/></svg>'
 };
 
@@ -91,13 +95,43 @@ const when = ts => {
   return new Date(ts).toLocaleDateString();
 };
 
-const rename = async region => {
-  const label = prompt('Region name', region.label);
-  if (label && label.trim()) {
-    await saveRegion({...region, label: label.trim()});
+// native prompt() is suppressed in Chrome action popups, so renaming
+// uses an in-popup <dialog> instead
+const renameDialog = $('#rename');
+const renameInput = $('#rename-input');
+const renameSave = $('#rename-save');
+let renamingRegion = null;
+
+const rename = region => {
+  renamingRegion = region;
+  renameInput.value = region.label;
+  renameSave.disabled = !region.label.trim();
+  if (!renameDialog.open) {
+    renameDialog.showModal();
+  }
+  renameInput.select();
+};
+
+// Save is meaningless without a name, so keep it disabled while empty
+renameInput.addEventListener('input', () => {
+  renameSave.disabled = !renameInput.value.trim();
+});
+
+renameDialog.addEventListener('close', async () => {
+  const value = renameDialog.returnValue;
+  // Esc and other close requests set no value; reset to avoid stale leaks
+  renameDialog.returnValue = '';
+  const region = renamingRegion;
+  renamingRegion = null;
+  if (value !== 'save' || !region) {
+    return;
+  }
+  const label = renameInput.value.trim();
+  if (label) {
+    await saveRegion({...region, label});
     render();
   }
-};
+});
 
 // actions
 $('#draw').addEventListener('click', () => {
