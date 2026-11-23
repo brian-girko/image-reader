@@ -275,8 +275,11 @@
   });
   em.addEventListener('closed', e => {
     if (e.metaKey || e.ctrlKey) {
+      // purge: true wipes the Granite model cache too (worker.js); an
+      // accuracy change deliberately leaves it alone
       chrome.runtime.sendMessage({
-        method: 'remove-indexeddb'
+        method: 'remove-indexeddb',
+        purge: true
       });
     }
   });

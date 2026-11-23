@@ -402,7 +402,14 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     });
   }
   else if (request.method === 'remove-indexeddb') {
-    caches.delete('traineddata').finally(response);
+    // the manual purge (close with ctrl/meta) also drops 'hf-model-cache',
+    // the Granite model cache, so a broken entry or an upstream model
+    // update can be recovered; an accuracy switch must not, its entries
+    // are accuracy-independent and re-downloading would cost hundreds of MB
+    (request.purge ?
+      Promise.all([caches.delete('traineddata'), caches.delete('hf-model-cache')]) :
+      caches.delete('traineddata')
+    ).finally(response);
     try {
       indexedDB.databases().then(as => {
         for (const {name} of as) {
