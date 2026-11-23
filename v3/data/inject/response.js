@@ -81,12 +81,16 @@
     'uk': 'ukr', 'ur': 'urd', 'uz': 'uzb', 'vi': 'vie', 'yi': 'yid'
   };
   // map a BCP-47 tag to a Tesseract language code; the Chinese region/
-  // script subtag decides between chi_sim and chi_tra
+  // script subtag decides between chi_sim and chi_tra, and the Serbian
+  // script subtag between srp (Cyrillic) and srp_latn
   const mapping = tag => {
     const [base, ...subtags] = tag.toLowerCase().split('-');
     if (base === 'zh') {
       return subtags.some(s => ['hant', 'tw', 'hk', 'mo'].includes(s)) ?
         'chi_tra' : 'chi_sim';
+    }
+    if (base === 'sr') {
+      return subtags.includes('latn') ? 'srp_latn' : 'srp';
     }
     return LANGS[base];
   };

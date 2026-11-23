@@ -352,7 +352,7 @@ Use Ctrl + Click or Command + Click to remove local language training data`,
                   <option value="spa_old">Spanish; Castilian - Old</option>
                   <option value="sqi">Albanian</option>
                   <option value="srp">Serbian</option>
-                  <option value="srp">latn  Serbian - Latin</option>
+                  <option value="srp_latn">Serbian - Latin</option>
                   <option value="swa">Swahili</option>
                   <option value="swe">Swedish</option>
                   <option value="syr">Syriac</option>
